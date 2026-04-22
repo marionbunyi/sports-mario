@@ -6,112 +6,129 @@
     <title>Sports Mystery</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        * { box-sizing: border-box; }
+        /* GLOBAL RESET */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
         body, html {
-            margin: 0; padding: 0; width: 100%; height: 100%;
-            /* CHANGED: Allow scrolling globally if content overflows */
-            overflow: auto; 
+            margin: 0; padding: 0; 
+            width: 100%; min-height: 100%;
+            /* Enables smooth scrolling on all devices */
+            overflow-x: hidden; 
+            overflow-y: auto;
             font-family: 'Arial Rounded MT Bold', sans-serif;
             background-color: #000; color: white;
         }
 
-        /* 1. YOUR BACKGROUND PHOTO (TRANSPARENT) */
+        /* 1. BACKGROUND LAYER */
         #bg-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-image: url('https://raw.githubusercontent.com/marionbunyi/sports-warm-up/main/backgroundphoto.jpg');
             background-size: cover; background-position: center;
-            opacity: 0.25; /* Adjusted transparency */
-            z-index: -1;
+            opacity: 0.25; z-index: -1;
         }
 
-        /* 2. TOP NAV */
+        /* 2. NAVIGATION BAR */
         #nav-bar {
-            position: fixed; top: 0; width: 100%; height: 65px;
+            position: sticky; top: 0; width: 100%; height: 65px;
             display: flex; align-items: center; justify-content: space-between;
-            padding: 0 20px; background: rgba(0,0,0,0.85);
+            padding: 0 15px; background: rgba(0,0,0,0.9);
             border-bottom: 3px solid #FBD000; z-index: 1000;
         }
-        #timer-display { font-size: 22px; color: #FBD000; font-weight: bold; min-width: 80px; text-align: center; }
-        .btn-nav { background: #43ad2e; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        #timer-display { font-size: 20px; color: #FBD000; font-weight: bold; }
+        .btn-nav { background: #43ad2e; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
-        /* 3. RESPONSIVE MAIN CONTAINER */
+        /* 3. MAIN LAYOUT ENGINE */
         #main-container {
-            display: flex; flex-direction: row;
-            padding: 80px 20px 20px 20px; 
-            /* CHANGED: Removed fixed height/width to allow scrollable overflow */
-            min-width: 100vw; 
-            min-height: 100vh; 
+            display: flex; flex-direction: column; /* Default for mobile */
+            padding: 20px;
             gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
+        /* Desktop side-by-side view */
+        @media (min-width: 850px) {
+            #main-container { flex-direction: row; align-items: flex-start; }
+            #photo-section { flex: 1.5; height: 70vh; position: sticky; top: 85px; }
+            #control-panel { flex: 1; }
+        }
+
+        /* 4. PHOTO SECTION (The Interaction Zone) */
         #photo-section {
-            flex: 1.2; border: 6px solid #FBD000; border-radius: 25px;
+            width: 100%;
+            aspect-ratio: 4/3; /* Maintains shape on all gadgets */
+            border: 6px solid #FBD000; border-radius: 25px;
             position: relative; background-color: #111;
             background-size: cover; background-position: center;
-            min-height: 400px; /* Ensures photo has a presence even when scrolling */
+            overflow: hidden; /* Keeps letters inside */
+            touch-action: none; /* Prevents accidental zooming when tapping letters */
         }
 
+        /* 5. CONTROL PANEL & CARDS */
         #control-panel {
-            flex: 0.8; max-width: 450px; display: flex; flex-direction: column; gap: 12px;
+            display: flex; flex-direction: column; gap: 15px; width: 100%;
         }
 
-        /* STABLE BOXES */
         .card {
-            background: rgba(0,0,0,0.9); border: 3px solid #FBD000;
+            background: rgba(0,0,0,0.85); border: 3px solid #FBD000;
             border-radius: 20px; padding: 15px; text-align: center;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            flex-shrink: 0;
+            min-height: 100px;
         }
 
-        #clue-card { height: 35%; min-height: 150px; }
-        #bank-card { height: 25%; min-height: 100px; }
-        #answer-card { height: 15%; min-height: 80px; }
-
-        /* MOBILE OVERRIDE */
-        @media (max-width: 850px) {
-            #main-container { flex-direction: column; height: auto; }
-            #photo-section { width: 100%; height: 400px; flex: none; }
-            #control-panel { width: 100%; max-width: none; flex: none; padding-bottom: 40px; }
+        /* Scrollable Letter Bank for small screens */
+        #bank-card {
+            max-height: 200px;
+            overflow-y: auto; /* Scroll up/down inside if many letters */
         }
 
-        /* 4. GAME ELEMENTS */
+        /* 6. GAME ELEMENTS */
         .hidden-letter {
-            position: absolute; width: 46px; height: 46px;
-            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            position: absolute; width: 44px; height: 44px;
+            background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3);
             border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            color: rgba(255,255,255,0.3); font-weight: bold; cursor: pointer; transform: translate(-50%, -50%);
+            color: rgba(255,255,255,0.5); font-weight: bold; cursor: pointer; transform: translate(-50%, -50%);
+            font-size: 18px;
         }
 
         .bank-letter {
-            width: 46px; height: 46px; background: #E52521;
-            border: 2px solid #000; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 22px; cursor: pointer; box-shadow: 2px 2px 0 #000; margin: 4px;
+            width: 44px; height: 44px; background: #E52521;
+            border: 2px solid #000; border-radius: 8px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 20px; cursor: pointer; margin: 4px;
         }
 
-        #answer-zone { display: flex; flex-wrap: nowrap; gap: 4px; justify-content: center; width: 100%; }
+        /* Scrollable Answer Zone (Left-to-Right) if word is long */
+        #answer-card {
+            overflow-x: auto; 
+            white-space: nowrap;
+            padding: 10px;
+        }
         
+        #answer-zone { 
+            display: flex; gap: 6px; justify-content: center; min-width: max-content; margin: 0 auto;
+        }
+
         .slot {
-            width: 34px; height: 48px; border: 2px solid #FBD000;
+            width: 36px; height: 48px; border: 2px solid #FBD000;
             border-radius: 8px; background: rgba(255,255,255,0.1);
             display: flex; align-items: center; justify-content: center;
-            color: #FBD000; font-weight: bold; font-size: 24px; flex-shrink: 0;
+            color: #FBD000; font-weight: bold; font-size: 22px; flex-shrink: 0;
         }
 
         #check-btn {
-            width: 100%; padding: 18px; background: #43ad2e; color: white;
-            border: none; border-radius: 15px; font-size: 24px; font-weight: bold;
+            width: 100%; padding: 20px; background: #43ad2e; color: white;
+            border: none; border-radius: 15px; font-size: 22px; font-weight: bold;
             box-shadow: 0 5px 0 #2d7a1f; cursor: pointer;
         }
 
-        #clue-img { max-height: 90%; max-width: 90%; border-radius: 12px; display: none; border: 2px solid white; }
+        #clue-img { max-height: 180px; max-width: 100%; border-radius: 12px; display: none; margin-top: 10px; }
 
-        /* 5. VICTORY OVERLAY WITH TIME */
+        /* 7. VICTORY OVERLAY */
         #win-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.97); z-index: 2000;
+            background: rgba(0,0,0,0.95); z-index: 2000;
             display: none; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center;
+            padding: 20px;
         }
     </style>
 </head>
@@ -130,16 +147,16 @@
 
     <div id="control-panel">
         <div style="text-align: center; font-size: 18px; color: #FBD000; font-weight: bold;">
-            LETTERS LEFT TO FIND: <span id="find-count">0</span>
+            LETTERS LEFT: <span id="find-count">0</span>
         </div>
 
         <div class="card" id="clue-card">
-            <div id="lock-msg" style="color: #666;">Find all letters to reveal the sport!</div>
-            <img id="clue-img" src="">
+            <div id="lock-msg" style="color: #888;">Tap hidden letters in the photo to unlock the clue!</div>
+            <center><img id="clue-img" src=""></center>
         </div>
 
         <div class="card" id="bank-card">
-            <div id="letter-bank" style="display:flex; flex-wrap:wrap; justify-content:center;"></div>
+            <div id="letter-bank"></div>
         </div>
 
         <button id="check-btn" onclick="checkAnswer()">CHECK ANSWER</button>
@@ -151,9 +168,9 @@
 </div>
 
 <div id="win-overlay">
-    <h1 style="font-size: 70px; color: #FBD000; margin-bottom: 10px;">STRIKE! 🏆</h1>
-    <h2 id="victory-time" style="font-size: 30px; color: white; margin-bottom: 30px;">Time: 00:00</h2>
-    <button class="btn-nav" style="padding: 20px 60px; font-size: 26px;" onclick="changeRound(1)">NEXT LEVEL</button>
+    <h1 style="font-size: 50px; color: #FBD000; margin: 0;">STRIKE! 🏆</h1>
+    <h2 id="victory-time" style="font-size: 24px; color: white; margin: 20px 0;">Time: 00:00</h2>
+    <button class="btn-nav" style="padding: 15px 40px; font-size: 20px;" onclick="changeRound(1)">NEXT LEVEL</button>
 </div>
 
 <audio id="snd-win" src="https://raw.githubusercontent.com/marionbunyi/sports-mario/main/Correct%20answer%20sound%20effect%20_%20No%20copyright.mp3"></audio>
@@ -210,8 +227,9 @@
             let l = document.createElement('div');
             l.className = 'hidden-letter';
             l.innerText = char;
-            l.style.top = (Math.random() * 75 + 12.5) + "%";
-            l.style.left = (Math.random() * 75 + 12.5) + "%";
+            // Spread letters safely within the bounds
+            l.style.top = (Math.random() * 80 + 10) + "%";
+            l.style.left = (Math.random() * 80 + 10) + "%";
             l.onclick = () => {
                 l.style.display = 'none';
                 found.push({char, used: false});
@@ -258,7 +276,7 @@
             document.getElementById('snd-win').play();
             document.getElementById('victory-time').innerText = "FINISH TIME: " + document.getElementById('timer-display').innerText;
             document.getElementById('win-overlay').style.display = 'flex';
-            confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 } });
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
         }
     }
 
