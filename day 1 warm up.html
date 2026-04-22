@@ -6,190 +6,148 @@
     <title>Sports Mystery</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        /* 1. BACKGROUND LAYER */
-        #master-background {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            background-image: url('https://raw.githubusercontent.com/marionbunyi/sports-warm-up/4e541bf7ee299f2edd5aada8047548feaefd5746/backgroundphoto.jpg');
-            background-size: cover;
-            background-position: center;
-            z-index: -100;
-            opacity: 0.25;
-            background-color: #000; 
-        }
-
-        html, body {
+        body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            overflow: hidden; 
-            font-family: 'Arial Rounded MT Bold', sans-serif;
-            background-color: #0f172a;
-            color: white;
-        }
-
-        /* 2. TOP NAVIGATION */
-        #top-controls {
-            position: fixed;
-            top: 15px; right: 20px;
-            display: flex; align-items: center; gap: 15px;
-            background: rgba(0,0,0,0.85);
-            padding: 10px 15px;
-            border: 3px solid #FBD000;
-            border-radius: 15px;
-            z-index: 1000;
-        }
-        #timer-box { font-size: 24px; color: #FBD000; font-weight: bold; min-width: 65px; text-align: center; }
-        .nav-btn {
-            background: #43ad2e; color: white; border: none;
-            padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer;
-        }
-
-        /* 3. MAIN LAYOUT (ADJUSTED FOR LONG WORDS) */
-        #main-wrapper {
-            display: grid;
-            grid-template-columns: 1fr 450px; /* Widened right column for long words */
-            width: 100vw; height: 100vh;
-            padding-top: 85px; 
-            box-sizing: border-box;
-        }
-
-        #left-col { padding: 15px; display: flex; align-items: center; justify-content: center; }
-        
-        #picture-box {
-            position: relative;
-            width: 100%; height: 100%;
-            border: 8px solid #FBD000;
-            border-radius: 25px;
-            background-size: cover;
-            background-position: center;
+            overflow: hidden; font-family: 'Arial Rounded MT Bold', sans-serif;
             background-color: #000;
         }
 
-        /* 4. SIDE PANEL STABILITY */
-        #right-col {
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+        /* 1. BACKGROUND PHOTO (FIXED & TRANSPARENT) */
+        #bg-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('https://raw.githubusercontent.com/marionbunyi/sports-warm-up/main/backgroundphoto.jpg');
+            background-size: cover; background-position: center;
+            opacity: 0.25; /* Transparency level */
+            z-index: -1;
         }
 
-        .panel-section {
-            background: rgba(0,0,0,0.85);
-            border: 3px solid #FBD000;
-            border-radius: 20px;
-            padding: 15px;
-            text-align: center;
+        /* 2. NAVIGATION TOP RIGHT */
+        #top-right-nav {
+            position: absolute; top: 15px; right: 20px;
+            display: flex; align-items: center; gap: 10px;
+            background: rgba(0,0,0,0.8); padding: 8px 15px;
+            border: 2px solid #FBD000; border-radius: 12px; z-index: 100;
+        }
+        #timer { font-size: 22px; color: #FBD000; font-weight: bold; min-width: 60px; text-align: center; }
+        .btn-nav { background: #43ad2e; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+
+        /* 3. MAIN GAME LAYOUT */
+        #game-wrapper {
+            display: grid; grid-template-columns: 1fr 460px;
+            width: 100vw; height: 100vh; padding: 80px 20px 20px 20px;
+            box-sizing: border-box; gap: 20px;
+        }
+
+        #pic-container {
+            width: 100%; height: 100%;
+            border: 6px solid #FBD000; border-radius: 20px;
+            background-size: cover; background-position: center;
+            position: relative; background-color: #111;
+        }
+
+        /* 4. SIDE PANEL (STABILIZED) */
+        #side-panel {
+            display: flex; flex-direction: column; gap: 12px; height: 100%;
+        }
+
+        .section {
+            background: rgba(0,0,0,0.85); border: 3px solid #FBD000;
+            border-radius: 15px; text-align: center; padding: 10px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
             flex-shrink: 0;
         }
 
-        /* Fixed Heights to prevent jumping when content changes */
-        #clue-display { height: 230px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        #bank-section { height: 130px; display: flex; align-items: center; justify-content: center; }
-        #answer-section { height: 110px; display: flex; align-items: center; justify-content: center; }
+        #clue-box { height: 32%; }
+        #bank-box { height: 22%; }
+        #answer-box { height: 12%; }
 
-        #header { font-size: 24px; text-shadow: 2px 2px 0 #E52521; margin-bottom: 5px; text-align: center; }
+        #find-msg { color: white; font-size: 20px; text-align: center; font-weight: bold; }
+        #find-count { color: #FBD000; font-size: 24px; }
 
-        /* 5. LETTERS & SLOTS */
+        #clue-img { max-height: 85%; max-width: 90%; border-radius: 10px; border: 2px solid white; display: none; }
+        #lock-text { color: #888; font-size: 15px; }
+
+        /* 5. TRANSPARENT HIDDEN LETTERS */
         .hidden-letter {
-            position: absolute; width: 50px; height: 50px;
-            background: rgba(255, 255, 255, 0.15);
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            border-radius: 50%; display: flex; justify-content: center; align-items: center;
-            color: rgba(255, 255, 255, 0.7); font-size: 28px; font-weight: bold;
-            transform: translate(-50%, -50%); cursor: pointer;
+            position: absolute; width: 48px; height: 48px;
+            background: rgba(255,255,255,0.08); /* Very transparent */
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: rgba(255,255,255,0.4); /* Faded text */
+            font-weight: bold; cursor: pointer; transform: translate(-50%, -50%);
+            transition: opacity 0.3s;
         }
 
-        .clickable-letter {
-            width: 48px; height: 48px;
-            background: #E52521; border: 2px solid #000;
-            border-radius: 10px; display: flex; justify-content: center; align-items: center;
-            font-size: 24px; font-weight: bold; cursor: pointer;
-            box-shadow: 3px 3px 0 #000; flex-shrink: 0;
+        .bank-letter {
+            width: 44px; height: 44px; background: #E52521;
+            color: white; border: 2px solid #000; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 20px; cursor: pointer; box-shadow: 2px 2px 0 #000;
         }
 
+        /* 6. ONE-LINE SPELLING ZONE */
         #answer-zone {
-            display: flex; flex-direction: row; flex-wrap: nowrap; /* Forces one line */
-            gap: 4px; justify-content: center; width: 100%;
+            display: flex; flex-wrap: nowrap; gap: 3px; justify-content: center; width: 100%;
         }
-
         .slot {
-            width: 33px; height: 50px; /* Slimmer to fit 11-12 letters in one line */
-            border: 2px solid #FBD000; border-radius: 6px;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 24px; color: #FBD000; font-weight: bold;
-            flex-shrink: 0; background: rgba(255,255,255,0.1);
+            width: 33px; height: 44px; border: 2px solid #FBD000;
+            border-radius: 6px; background: rgba(255,255,255,0.1);
+            display: flex; align-items: center; justify-content: center;
+            color: #FBD000; font-weight: bold; font-size: 20px; flex-shrink: 0;
         }
 
-        #letter-bank { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; width: 100%; }
-
-        #action-btn {
-            width: 100%; padding: 18px; font-size: 24px; font-weight: bold;
-            background: #43ad2e; color: white; border: none; border-radius: 15px;
+        #check-btn {
+            width: 100%; padding: 18px; background: #43ad2e; color: white;
+            border: none; border-radius: 12px; font-size: 22px; font-weight: bold;
             box-shadow: 0 5px 0 #2d7a1f; cursor: pointer; flex-shrink: 0;
         }
 
-        #clue-img { 
-            max-width: 95%; max-height: 160px; 
-            display: none; border: 3px solid white; border-radius: 12px; margin-top: 10px;
-        }
-
-        /* OVERLAYS */
-        #start-overlay, #victory-overlay {
+        #win-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.98); z-index: 5000; display: flex;
-            flex-direction: column; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.96); z-index: 1000;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
         }
     </style>
 </head>
 <body>
 
-<div id="master-background"></div>
+<div id="bg-layer"></div>
 
-<div id="start-overlay">
-    <h1 style="font-size: clamp(40px, 10vw, 80px); text-shadow: 6px 6px 0 #E52521; margin-bottom: 20px;">SPORTS MYSTERY</h1>
-    <button style="padding: 20px 60px; font-size: 30px; background: #43ad2e; border: 4px solid #FBD000; border-radius: 25px; color: white; cursor: pointer;" onclick="startGame()">PLAY NOW</button>
+<div id="top-right-nav">
+    <button class="btn-nav" onclick="changeRound(-1)">BACK</button>
+    <div id="timer">00:00</div>
+    <button class="btn-nav" onclick="changeRound(1)">NEXT</button>
 </div>
 
-<div id="top-controls">
-    <button class="nav-btn" onclick="prevRound()">BACK</button>
-    <div id="timer-box">00:00</div>
-    <button class="nav-btn" onclick="skipRound()">NEXT</button>
-</div>
+<div id="game-wrapper">
+    <div id="pic-container"></div>
 
-<div id="main-wrapper">
-    <div id="left-col">
-        <div id="picture-box"></div>
-    </div>
+    <div id="side-panel">
+        <div id="find-msg">LETTERS TO FIND: <span id="find-count">0</span></div>
 
-    <div id="right-col">
-        <div id="header">LETTERS TO FIND: <span id="find-count">0</span></div>
-        
-        <div class="panel-section" id="clue-display">
-            <h3 style="margin:0; color:#FBD000;">CLUE</h3>
-            <p id="lock-msg">Collect all letters to reveal the sport!</p>
+        <div class="section" id="clue-box">
+            <div id="lock-text">Find letters to unlock clue!</div>
             <img id="clue-img" src="">
         </div>
 
-        <div class="panel-section" id="bank-section">
-            <div id="letter-bank"></div>
+        <div class="section" id="bank-box">
+            <div id="letter-bank" style="display:flex; flex-wrap:wrap; gap:6px; justify-content:center;"></div>
         </div>
 
-        <button id="action-btn" onclick="checkAnswer()">CHECK ANSWER</button>
+        <button id="check-btn" onclick="checkAnswer()">CHECK ANSWER</button>
 
-        <div class="panel-section" id="answer-section">
+        <div class="section" id="answer-box">
             <div id="answer-zone"></div>
         </div>
     </div>
 </div>
 
-<div id="victory-overlay" style="display:none;">
-    <h1 style="font-size: 70px; color: #FBD000;">STRIKE! 🏆</h1>
-    <p id="time-flash" style="font-size: 30px; margin-bottom: 25px;"></p>
-    <button style="padding: 20px 50px; font-size: 24px; background:#43ad2e; color:white; border-radius:15px; border:none; cursor:pointer;" onclick="handleNextClick()">NEXT LEVEL</button>
+<div id="win-screen">
+    <h1 style="font-size: 60px; color: #FBD000; margin: 10px;">STRIKE! 🏆</h1>
+    <p id="final-time" style="color: white; font-size: 24px; margin-bottom: 20px;"></p>
+    <button class="btn-nav" style="padding: 15px 50px; font-size: 24px;" onclick="changeRound(1)">NEXT ROUND</button>
 </div>
 
-<audio id="bg-music" loop src="https://raw.githubusercontent.com/marionbunyi/sports-mario/main/Energetic%20Rock%20Background%20Music%20For%20Sports%20%26%20Workout%20Videos.mp3"></audio>
-<audio id="snd-click" src="https://raw.githubusercontent.com/marionbunyi/sports-mario/main/Mouse%20Click%20-%20Sound%20Effect%20(HD).mp3"></audio>
 <audio id="snd-win" src="https://raw.githubusercontent.com/marionbunyi/sports-mario/main/Correct%20answer%20sound%20effect%20_%20No%20copyright.mp3"></audio>
 
 <script>
@@ -204,127 +162,104 @@
         { name: "VOLLEYBALL", img: "volleyball" }
     ];
 
-    // Added more random positions for variety
-    const safePos = [
-        {t:15,l:15}, {t:20,l:85}, {t:85,l:15}, {t:80,l:80}, 
-        {t:50,l:50}, {t:30,l:50}, {t:70,l:50}, {t:50,l:20}, 
-        {t:50,l:80}, {t:10,l:50}, {t:90,l:50}, {t:30,l:30}, {t:70,l:70}
-    ];
+    let currentIdx = 0;
+    let found = [];
+    let startTime;
+    let timerRef;
 
-    let currentRoundIndex = 0;
-    let foundLetters = [];
-    let lettersToFind = 0;
-    let timerInterval;
-    let roundStartTime;
+    function init() {
+        const s = sports[currentIdx];
+        found = [];
+        clearInterval(timerRef);
+        startTime = Date.now();
+        timerRef = setInterval(updTimer, 1000);
 
-    function startGame() {
-        document.getElementById('start-overlay').style.display = 'none';
-        const music = document.getElementById('bg-music');
-        music.volume = 0.1;
-        music.play();
-        initRound();
-    }
-
-    function initRound() {
-        const sport = sports[currentRoundIndex];
-        lettersToFind = sport.name.length;
-        foundLetters = [];
-        clearInterval(timerInterval);
-        roundStartTime = Date.now();
-        timerInterval = setInterval(updateTimer, 1000);
-
-        updateCount();
-        document.getElementById('picture-box').style.backgroundImage = `url('https://raw.githubusercontent.com/marionbunyi/sports-mario/main/hidden%20${sport.img}.png')`;
-        document.getElementById('clue-img').src = `https://raw.githubusercontent.com/marionbunyi/sports-mario/main/${sport.img}%20clue.png`;
+        document.getElementById('find-count').innerText = s.name.length;
+        document.getElementById('pic-container').style.backgroundImage = `url('https://raw.githubusercontent.com/marionbunyi/sports-mario/main/hidden%20${s.img}.png')`;
+        document.getElementById('clue-img').src = `https://raw.githubusercontent.com/marionbunyi/sports-mario/main/${s.img}%20clue.png`;
         document.getElementById('clue-img').style.display = 'none';
-        document.getElementById('lock-msg').style.display = 'block';
-        document.getElementById('victory-overlay').style.display = 'none';
-        
+        document.getElementById('lock-text').style.display = 'block';
+        document.getElementById('win-screen').style.display = 'none';
         document.getElementById('letter-bank').innerHTML = '';
+        
         const zone = document.getElementById('answer-zone');
         zone.innerHTML = '';
-
-        sport.name.split('').forEach(() => {
-            const s = document.createElement('div');
-            s.className = 'slot';
-            s.onclick = function() {
+        s.name.split('').forEach(() => {
+            let sl = document.createElement('div');
+            sl.className = 'slot';
+            sl.onclick = function() {
                 if(this.innerText) {
-                    const char = this.innerText;
-                    const item = foundLetters.find(i => i.char === char && i.used);
-                    if(item) { item.used = false; this.innerText = ""; renderBank(); }
+                    let item = found.find(f => f.char === this.innerText && f.used);
+                    if(item) { item.used = false; this.innerText = ''; renderBank(); }
                 }
             };
-            zone.appendChild(s);
+            zone.appendChild(sl);
         });
 
-        const picBox = document.getElementById('picture-box');
-        picBox.innerHTML = '';
-        let pos = [...safePos].sort(() => 0.5 - Math.random());
-        sport.name.split('').forEach((char, i) => {
-            const l = document.createElement('div');
+        const pic = document.getElementById('pic-container');
+        pic.innerHTML = '';
+        s.name.split('').forEach(char => {
+            let l = document.createElement('div');
             l.className = 'hidden-letter';
             l.innerText = char;
-            l.style.top = pos[i].t + "%";
-            l.style.left = pos[i].l + "%";
+            l.style.top = (Math.random() * 80 + 10) + "%";
+            l.style.left = (Math.random() * 80 + 10) + "%";
             l.onclick = () => {
-                document.getElementById('snd-click').play();
                 l.style.display = 'none';
-                foundLetters.push({char, used: false});
-                lettersToFind--;
-                updateCount();
-                if(lettersToFind === 0) {
-                    document.getElementById('lock-msg').style.display = 'none';
+                found.push({char, used: false});
+                let remain = s.name.length - found.length;
+                document.getElementById('find-count').innerText = remain;
+                if(remain === 0) {
+                    document.getElementById('lock-text').style.display = 'none';
                     document.getElementById('clue-img').style.display = 'block';
                 }
                 renderBank();
             };
-            picBox.appendChild(l);
+            pic.appendChild(l);
         });
     }
 
-    function updateCount() {
-        document.getElementById('find-count').innerText = lettersToFind;
-    }
-
     function renderBank() {
-        const bank = document.getElementById('letter-bank');
-        bank.innerHTML = '';
-        foundLetters.forEach(item => {
+        const b = document.getElementById('letter-bank');
+        b.innerHTML = '';
+        found.forEach(item => {
             if(!item.used) {
-                const d = document.createElement('div');
-                d.className = 'clickable-letter';
-                d.innerText = item.char;
-                d.onclick = () => {
-                    const empty = Array.from(document.querySelectorAll('.slot')).find(s => !s.innerText);
+                let div = document.createElement('div');
+                div.className = 'bank-letter';
+                div.innerText = item.char;
+                div.onclick = () => {
+                    let empty = [...document.querySelectorAll('.slot')].find(s => !s.innerText);
                     if(empty) { empty.innerText = item.char; item.used = true; renderBank(); }
                 };
-                bank.appendChild(d);
+                b.appendChild(div);
             }
         });
     }
 
-    function updateTimer() {
-        const diff = Date.now() - roundStartTime;
-        const mins = Math.floor(diff / 60000).toString().padStart(2, '0');
-        const secs = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
-        document.getElementById('timer-box').innerText = `${mins}:${secs}`;
+    function updTimer() {
+        let d = Math.floor((Date.now() - startTime) / 1000);
+        let m = Math.floor(d / 60).toString().padStart(2, '0');
+        let s = (d % 60).toString().padStart(2, '0');
+        document.getElementById('timer').innerText = `${m}:${s}`;
     }
 
     function checkAnswer() {
-        let guess = "";
-        document.querySelectorAll('.slot').forEach(s => guess += s.innerText);
-        if(guess === sports[currentRoundIndex].name) {
-            clearInterval(timerInterval);
+        let guess = [...document.querySelectorAll('.slot')].map(s => s.innerText).join('');
+        if(guess === sports[currentIdx].name) {
+            clearInterval(timerRef);
             document.getElementById('snd-win').play();
-            document.getElementById('time-flash').innerText = `TIME: ${document.getElementById('timer-box').innerText}`;
-            document.getElementById('victory-overlay').style.display = 'flex';
-            confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } });
+            document.getElementById('final-time').innerText = "Finished in: " + document.getElementById('timer').innerText;
+            document.getElementById('win-screen').style.display = 'flex';
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
         }
     }
 
-    function handleNextClick() { currentRoundIndex = (currentRoundIndex + 1) % sports.length; initRound(); }
-    function skipRound() { currentRoundIndex = (currentRoundIndex + 1) % sports.length; initRound(); }
-    function prevRound() { currentRoundIndex = (currentRoundIndex - 1 + sports.length) % sports.length; initRound(); }
+    function changeRound(dir) {
+        currentIdx = (currentIdx + dir + sports.length) % sports.length;
+        init();
+    }
+
+    window.onload = init;
 </script>
 </body>
 </html>
