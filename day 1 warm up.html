@@ -12,7 +12,7 @@
             background-color: #5C94FC;
             display: flex; flex-direction: column;
             margin: 0; padding: 15px; color: white;
-            height: 100vh; width: 100vw; overflow: hidden; user-select: none;
+            min-height: 100vh; width: 100vw; overflow-x: hidden; user-select: none;
         }
 
         #top-bar {
@@ -36,29 +36,47 @@
         .nav-btn:active { transform: translateY(2px); box-shadow: none; }
 
         #header {
-            font-size: 45px; text-align: center; margin-bottom: 10px;
+            font-size: 45px; text-align: center; margin-bottom: 10px; margin-top: 60px;
             text-shadow: 4px 4px 0 #E52521; flex-shrink: 0;
         }
 
         #game-container {
-            display: flex; flex-direction: row; flex-grow: 1; gap: 25px; width: 100%; height: 85%;
+            display: flex; flex-direction: row; flex-grow: 1; gap: 20px; width: 100%; height: 75vh;
         }
         
         #picture-box {
-            position: relative; flex: 2.2; border: 12px solid #FBD000;
-            background-size: 100% 100%; background-repeat: no-repeat;
-            box-shadow: 0 0 40px rgba(0,0,0,0.6); border-radius: 20px;
+            position: relative; flex: 2; border: 12px solid #FBD000;
+            background-size: contain; background-position: center; background-repeat: no-repeat;
+            box-shadow: 0 0 40px rgba(0,0,0,0.6); border-radius: 20px; background-color: #000;
         }
 
-        #side-panel { flex: 1; display: flex; flex-direction: column; gap: 15px; }
+        /* SIDE PANEL ADJUSTMENTS */
+        #side-panel { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            height: 100%; /* Occupy full height */
+        }
+        
         .panel-section {
             background: rgba(0, 0, 0, 0.8); border: 6px solid #FBD000;
             border-radius: 25px; padding: 15px; text-align: center;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
+            flex-grow: 1; /* This makes sections expand to fill the blank space */
         }
         
-        #clue-img { max-width: 95%; max-height: 85%; display: none; border: 5px solid white; border-radius: 15px; }
-        #letter-bank { flex: 1; display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 10px; min-height: 120px; }
+        #clue-img { max-width: 100%; max-height: 200px; display: none; border: 3px solid white; border-radius: 10px; }
+        
+        #letter-bank { 
+            display: flex; 
+            flex-direction: row; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            align-content: center; 
+            gap: 10px; 
+            min-height: 120px; 
+        }
         
         .clickable-letter {
             width: 45px; height: 65px; background: #E52521; color: white; border: 2px solid #000;
@@ -73,8 +91,10 @@
         }
 
         #answer-zone {
-            flex: 1; display: flex; justify-content: center; align-items: center;
-            gap: 5px; background: white; border-radius: 20px; border: 6px solid #43ad2e; padding: 10px;
+            display: flex; flex-direction: row;
+            flex-wrap: wrap; justify-content: center; align-items: center;
+            gap: 8px; background: white; border-radius: 20px; border: 6px solid #43ad2e; padding: 15px;
+            min-height: 100px;
         }
         
         .wrong-flash { background: #ffcccc !important; border-color: #E52521 !important; animation: shake 0.3s; }
@@ -91,14 +111,22 @@
         }
 
         .hidden-letter {
-            position: absolute; width: 70px; height: 70px;
-            background: rgba(255, 255, 255, 0.15);
-            border: 2px solid rgba(255, 255, 255, 0.2);
+            position: absolute; width: 65px; height: 65px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.4);
             border-radius: 50%; display: flex;
             justify-content: center; align-items: center;
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 40px; font-weight: bold;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 38px; font-weight: bold;
             cursor: pointer; z-index: 5;
+        }
+
+        @media only screen and (max-width: 1024px) {
+            body { overflow-y: auto; }
+            #game-container { flex-direction: column; height: auto; }
+            #picture-box { height: 45vh; width: 100%; flex: none; }
+            #header { font-size: 32px; }
+            #side-panel { height: auto; }
         }
 
         #victory-overlay {
@@ -127,7 +155,7 @@
     <div id="picture-box"></div>
     <div id="side-panel">
         <div class="panel-section" id="clue-display">
-            <h2 style="margin: 0; font-size: 30px; color: #FBD000;">CLUE</h2>
+            <h2 style="margin: 0; font-size: 28px; color: #FBD000;">CLUE</h2>
             <div id="lock-msg" style="font-size: 18px;">🔒 Find letters to reveal</div>
             <img id="clue-img" src="" alt="Clue">
         </div>
@@ -169,16 +197,13 @@
     let lettersLeft = 0;
     let roundsCompleted = sports.map(() => false);
 
-    // Timer Logic
     let roundStartTime;
     let timerInterval;
-    let isTimerRunning = false;
 
     function resetAndStartTimer() {
         clearInterval(timerInterval);
         document.getElementById('timer-box').innerText = "00:00";
         roundStartTime = Date.now();
-        isTimerRunning = true;
         timerInterval = setInterval(updateTimer, 1000);
     }
 
@@ -196,12 +221,14 @@
         lettersLeft = cleanName.length;
         foundLetters = [];
         
-        // Start fresh timer for each round
         resetAndStartTimer();
 
         document.getElementById('header').innerText = `LETTERS TO FIND: ${lettersLeft}`;
         document.getElementById('picture-box').style.backgroundImage = `url('https://raw.githubusercontent.com/marionbunyi/sports-mario/main/hidden%20${sport.img}.png')`;
-        document.getElementById('clue-img').src = `https://raw.githubusercontent.com/marionbunyi/sports-mario/main/clue%20${sport.img}.png`;
+        
+        /* UPDATED CLUE IMAGE PATH */
+        document.getElementById('clue-img').src = `https://raw.githubusercontent.com/marionbunyi/sports-mario/main/${sport.img}%20clue.png`;
+        
         document.getElementById('clue-img').style.display = 'none';
         document.getElementById('lock-msg').style.display = 'block';
         document.getElementById('victory-overlay').style.display = 'none';
@@ -296,7 +323,7 @@
         const zone = document.getElementById('answer-zone');
 
         if (guess === correctWord) {
-            clearInterval(timerInterval); // Stop timer immediately
+            clearInterval(timerInterval);
             roundsCompleted[currentRoundIndex] = true;
             document.getElementById('snd-win').play();
             showVictory();
