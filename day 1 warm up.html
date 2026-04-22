@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mario Sports Mystery</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Arial Rounded MT Bold', sans-serif;
+            background-color: #5C94FC;
+            display: flex; flex-direction: column;
+            margin: 0; padding: 15px; color: white;
+            height: 100vh; width: 100vw; overflow: hidden; user-select: none;
+        }
+
+        #top-bar {
+            position: fixed; top: 15px; left: 15px;
+            background: rgba(0,0,0,0.8); border: 3px solid #FBD000;
+            border-radius: 15px; padding: 10px; display: flex; gap: 10px; z-index: 10;
+        }
+
+        #timer-box {
+            position: fixed; top: 15px; right: 15px;
+            background: rgba(0,0,0,0.8); border: 3px solid #FBD000;
+            border-radius: 15px; padding: 10px 20px; font-size: 24px; color: #FBD000;
+            z-index: 10; min-width: 120px; text-align: center;
+        }
+        
+        .nav-btn {
+            background: #43ad2e; color: white; border: none;
+            padding: 8px 15px; border-radius: 8px; cursor: pointer;
+            font-weight: bold; font-size: 16px; box-shadow: 0 3px 0 rgba(0,0,0,0.3);
+        }
+        .nav-btn:active { transform: translateY(2px); box-shadow: none; }
+
+        #header {
+            font-size: 45px; text-align: center; margin-bottom: 10px;
+            text-shadow: 4px 4px 0 #E52521; flex-shrink: 0;
+        }
+
+        #game-container {
+            display: flex; flex-direction: row; flex-grow: 1; gap: 25px; width: 100%; height: 85%;
+        }
+        
+        #picture-box {
+            position: relative; flex: 2.2; border: 12px solid #FBD000;
+            background-size: 100% 100%; background-repeat: no-repeat;
+            box-shadow: 0 0 40px rgba(0,0,0,0.6); border-radius: 20px;
+        }
+
+        #side-panel { flex: 1; display: flex; flex-direction: column; gap: 15px; }
+        .panel-section {
+            background: rgba(0, 0, 0, 0.8); border: 6px solid #FBD000;
+            border-radius: 25px; padding: 15px; text-align: center;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        
+        #clue-img { max-width: 95%; max-height: 85%; display: none; border: 5px solid white; border-radius: 15px; }
+        #letter-bank { flex: 1; display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 10px; min-height: 120px; }
+        
+        .clickable-letter {
+            width: 45px; height: 65px; background: #E52521; color: white; border: 2px solid #000;
+            display: flex; justify-content: center; align-items: center; font-size: 30px;
+            cursor: pointer; border-radius: 8px; box-shadow: 3px 3px 0 #000;
+        }
+
+        #action-btn {
+            width: 100%; padding: 15px; font-size: 24px; font-weight: bold; cursor: pointer;
+            border-radius: 15px; border: none; box-shadow: 0 6px 0 rgba(0,0,0,0.4);
+            background: #43ad2e; color: white;
+        }
+
+        #answer-zone {
+            flex: 1; display: flex; justify-content: center; align-items: center;
+            gap: 5px; background: white; border-radius: 20px; border: 6px solid #43ad2e; padding: 10px;
+        }
+        
+        .wrong-flash { background: #ffcccc !important; border-color: #E52521 !important; animation: shake 0.3s; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .slot {
+            width: 40px; height: 60px; border: 2px solid #333; background: #eee;
+            color: #E52521; display: flex; justify-content: center; align-items: center;
+            font-size: 28px; font-weight: bold; cursor: pointer;
+        }
+
+        .hidden-letter {
+            position: absolute; width: 70px; height: 70px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%; display: flex;
+            justify-content: center; align-items: center;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 40px; font-weight: bold;
+            cursor: pointer; z-index: 5;
+        }
+
+        #victory-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 1000; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center;
+        }
+        #victory-overlay h1 { font-size: 80px; color: #FBD000; text-shadow: 0 0 40px red; margin: 10px; }
+        
+        .found-anim { animation: fadeOut 0.4s forwards; pointer-events: none; }
+        @keyframes fadeOut { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(4); opacity: 0; } }
+    </style>
+</head>
+<body>
+
+<div id="top-bar">
+    <button id="back-btn" class="nav-btn" onclick="prevRound()">⬅️ BACK</button>
+    <button id="skip-btn" class="nav-btn" onclick="skipRound()">SKIP ➡️</button>
+</div>
+
+<div id="timer-box">00:00</div>
+
+<div id="header">LETTERS TO FIND: 8</div>
+
+<div id="game-container">
+    <div id="picture-box"></div>
+    <div id="side-panel">
+        <div class="panel-section" id="clue-display">
+            <h2 style="margin: 0; font-size: 30px; color: #FBD000;">CLUE</h2>
+            <div id="lock-msg" style="font-size: 18px;">🔒 Find letters to reveal</div>
+            <img id="clue-img" src="" alt="Clue">
+        </div>
+        <div class="panel-section" id="letter-bank"></div>
+        <div id="button-area">
+            <button id="action-btn" onclick="checkAnswer()">CHECK ANSWER</button>
+        </div>
+        <div id="answer-zone"></div>
+    </div>
+</div>
+
+<div id="victory-overlay">
+    <h1 id="victory-text">CORRECT!</h1>
+    <p id="time-flash" style="font-size: 35px; color: #FBD000; margin: 0;"></p>
+    <p id="victory-sub" style="font-size: 24px; color: white; max-width: 80%; margin-top: 10px;"></p>
+    <button id="next-btn" style="width: 300px; height: 70px; font-size: 24px; background:#43ad2e; color:white; border:none; border-radius:15px; cursor:pointer; margin-top: 20px;" onclick="handleNextClick()">NEXT ➡️</button>
+</div>
+
+<audio id="bg-music" loop src="https://raw.githubusercontent.com/marionbunyi/sports-mario/main/Energetic%20Rock%20Background%20Music%20For%20Sports%20%26%20Workout%20Videos.mp3"></audio>
+<audio id="snd-click" src="https://raw.githubusercontent.com/marionbunyi/sports-mario/main/Mouse%20Click%20-%20Sound%20Effect%20(HD).mp3"></audio>
+<audio id="snd-win" src="https://raw.githubusercontent.com/marionbunyi/sports-mario/main/Correct%20answer%20sound%20effect%20_%20No%20copyright.mp3"></audio>
+
+<script>
+    const sports = [
+        { name: "SWIMMING", img: "swimming" },
+        { name: "BASKETBALL", img: "basketball" },
+        { name: "SOCCER", img: "soccer" },
+        { name: "TENNIS", img: "tennis" },
+        { name: "BADMINTON", img: "badminton" },
+        { name: "BASEBALL", img: "baseball" },
+        { name: "TABLE TENNIS", img: "table tennis" },
+        { name: "VOLLEYBALL", img: "volleyball" }
+    ];
+
+    const safePos = [{t:15,l:15},{t:15,l:75},{t:45,l:45},{t:75,l:15},{t:75,l:75},{t:30,l:10},{t:10,l:45},{t:60,l:85},{t:50,l:20},{t:20,l:60},{t:85,l:50}];
+
+    let currentRoundIndex = 0;
+    let foundLetters = [];
+    let lettersLeft = 0;
+    let roundsCompleted = sports.map(() => false);
+
+    // Timer Logic
+    let roundStartTime;
+    let timerInterval;
+    let isTimerRunning = false;
+
+    function resetAndStartTimer() {
+        clearInterval(timerInterval);
+        document.getElementById('timer-box').innerText = "00:00";
+        roundStartTime = Date.now();
+        isTimerRunning = true;
+        timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    function updateTimer() {
+        const now = Date.now();
+        const diff = now - roundStartTime;
+        const mins = Math.floor(diff / 60000).toString().padStart(2, '0');
+        const secs = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+        document.getElementById('timer-box').innerText = `${mins}:${secs}`;
+    }
+
+    function initRound() {
+        const sport = sports[currentRoundIndex];
+        const cleanName = sport.name.replace(/\s/g, ''); 
+        lettersLeft = cleanName.length;
+        foundLetters = [];
+        
+        // Start fresh timer for each round
+        resetAndStartTimer();
+
+        document.getElementById('header').innerText = `LETTERS TO FIND: ${lettersLeft}`;
+        document.getElementById('picture-box').style.backgroundImage = `url('https://raw.githubusercontent.com/marionbunyi/sports-mario/main/hidden%20${sport.img}.png')`;
+        document.getElementById('clue-img').src = `https://raw.githubusercontent.com/marionbunyi/sports-mario/main/clue%20${sport.img}.png`;
+        document.getElementById('clue-img').style.display = 'none';
+        document.getElementById('lock-msg').style.display = 'block';
+        document.getElementById('victory-overlay').style.display = 'none';
+        
+        document.getElementById('action-btn').innerText = "CHECK ANSWER";
+        document.getElementById('letter-bank').innerHTML = '';
+        const zone = document.getElementById('answer-zone');
+        zone.innerHTML = '';
+        zone.classList.remove('wrong-flash');
+        
+        cleanName.split('').forEach(() => {
+            const slot = document.createElement('div');
+            slot.className = 'slot';
+            slot.onclick = function() { returnLetter(this); };
+            zone.appendChild(slot);
+        });
+
+        const picBox = document.getElementById('picture-box');
+        picBox.innerHTML = '';
+        let shuffledPos = [...safePos].sort(() => 0.5 - Math.random());
+        
+        cleanName.split('').forEach((char, index) => {
+            const l = document.createElement('div');
+            l.className = 'hidden-letter';
+            l.innerText = char;
+            l.style.top = shuffledPos[index].t + "%";
+            l.style.left = shuffledPos[index].l + "%";
+            l.onclick = (e) => { e.stopPropagation(); collect(l, char); };
+            picBox.appendChild(l);
+        });
+    }
+
+    function collect(el, char) {
+        if (el.classList.contains('found-anim')) return;
+        
+        const bg = document.getElementById('bg-music');
+        if (bg.paused) { 
+            bg.volume = 0.03;
+            bg.currentTime = 10;
+            bg.play(); 
+        }
+        
+        const s = document.getElementById('snd-click');
+        s.pause(); s.currentTime = 0.55; s.play();
+        
+        el.classList.add('found-anim');
+        foundLetters.push({char: char, id: Math.random(), used: false});
+        lettersLeft--;
+        document.getElementById('header').innerText = `LETTERS TO FIND: ${lettersLeft}`;
+        if (lettersLeft === 0) {
+            document.getElementById('lock-msg').style.display = 'none';
+            document.getElementById('clue-img').style.display = 'block';
+        }
+        renderBank();
+    }
+
+    function renderBank() {
+        const bank = document.getElementById('letter-bank');
+        bank.innerHTML = '';
+        foundLetters.forEach(item => {
+            if (!item.used) {
+                const div = document.createElement('div');
+                div.className = 'clickable-letter';
+                div.innerText = item.char;
+                div.onclick = () => moveToSlot(item);
+                bank.appendChild(div);
+            }
+        });
+    }
+
+    function moveToSlot(item) {
+        const slots = Array.from(document.querySelectorAll('.slot'));
+        const emptySlot = slots.find(s => s.innerText === "");
+        if (emptySlot) {
+            emptySlot.innerText = item.char;
+            item.used = true;
+            renderBank();
+        }
+    }
+
+    function returnLetter(slot) {
+        if (!slot.innerText) return;
+        const char = slot.innerText;
+        const item = foundLetters.find(i => i.char === char && i.used === true);
+        if (item) { item.used = false; slot.innerText = ""; renderBank(); }
+    }
+
+    function checkAnswer() {
+        let guess = "";
+        document.querySelectorAll('.slot').forEach(s => guess += s.innerText);
+        const correctWord = sports[currentRoundIndex].name.replace(/\s/g, '');
+        const zone = document.getElementById('answer-zone');
+
+        if (guess === correctWord) {
+            clearInterval(timerInterval); // Stop timer immediately
+            roundsCompleted[currentRoundIndex] = true;
+            document.getElementById('snd-win').play();
+            showVictory();
+        } else {
+            zone.classList.add('wrong-flash');
+            setTimeout(() => zone.classList.remove('wrong-flash'), 500);
+        }
+    }
+
+    function showVictory() {
+        const overlay = document.getElementById('victory-overlay');
+        const title = document.getElementById('victory-text');
+        const sub = document.getElementById('victory-sub');
+        const timeFlash = document.getElementById('time-flash');
+        const btn = document.getElementById('next-btn');
+
+        const finishTime = document.getElementById('timer-box').innerText;
+        timeFlash.innerText = `FINISH TIME: ${finishTime}`;
+
+        const remainingCount = roundsCompleted.filter(r => !r).length;
+
+        if (remainingCount === 0) {
+            title.innerText = "CONGRATULATIONS!";
+            sub.innerText = "YOU ANSWERED EVERYTHING CORRECTLY!";
+            btn.innerText = "RESTART GAME";
+            confetti({ particleCount: 500, spread: 160, origin: { y: 0.6 } });
+        } else {
+            title.innerText = "CORRECT!";
+            sub.innerText = "";
+            btn.innerText = "NEXT ROUND ➡️";
+        }
+        overlay.style.display = 'flex';
+    }
+
+    function handleNextClick() {
+        const remainingIdx = roundsCompleted.findIndex(r => r === false);
+        if (remainingIdx === -1) {
+            location.reload();
+        } else {
+            currentRoundIndex = remainingIdx;
+            initRound();
+        }
+    }
+
+    function skipRound() {
+        currentRoundIndex = (currentRoundIndex + 1) % sports.length;
+        initRound();
+    }
+
+    function prevRound() {
+        currentRoundIndex = (currentRoundIndex - 1 + sports.length) % sports.length;
+        initRound();
+    }
+
+    initRound();
+</script>
+</body>
+</html>
