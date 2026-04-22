@@ -6,7 +6,7 @@
     <title>Sports Mystery</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        /* BACKGROUND SETTINGS */
+        /* 1. BACKGROUND LAYER */
         #master-background {
             position: fixed;
             top: 0; left: 0;
@@ -14,7 +14,6 @@
             background-image: url('https://raw.githubusercontent.com/marionbunyi/sports-warm-up/4e541bf7ee299f2edd5aada8047548feaefd5746/backgroundphoto.jpg');
             background-size: cover;
             background-position: center;
-            background-repeat: no-repeat;
             z-index: -100;
             opacity: 0.25;
             background-color: #000; 
@@ -23,141 +22,121 @@
         html, body {
             margin: 0; padding: 0; width: 100%; height: 100%;
             overflow: hidden; 
-            font-family: 'Arial Rounded MT Bold', 'Helvetica', sans-serif; user-select: none;
-            background-color: #0f172a; 
-        }
-
-        body { display: flex; flex-direction: column; height: 100dvh; }
-
-        /* HEADER & TOP NAVIGATION */
-        #header-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-            height: 70px;
-            flex-shrink: 0;
-        }
-
-        #header {
-            font-size: clamp(24px, 4vh, 40px);
-            text-shadow: 3px 3px 0 #E52521;
+            font-family: 'Arial Rounded MT Bold', sans-serif;
+            background-color: #0f172a;
             color: white;
-            margin: 0 auto; /* Keeps title centered */
         }
 
+        /* 2. TOP NAVIGATION */
         #top-controls {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(0,0,0,0.8);
-            padding: 8px;
-            border: 2px solid #FBD000;
-            border-radius: 12px;
-            z-index: 100;
+            position: fixed;
+            top: 15px; right: 20px;
+            display: flex; align-items: center; gap: 15px;
+            background: rgba(0,0,0,0.85);
+            padding: 10px 15px;
+            border: 3px solid #FBD000;
+            border-radius: 15px;
+            z-index: 1000;
         }
-
-        #timer-box { font-size: 20px; color: #FBD000; font-weight: bold; min-width: 60px; text-align: center; }
-        
+        #timer-box { font-size: 24px; color: #FBD000; font-weight: bold; min-width: 65px; text-align: center; }
         .nav-btn {
             background: #43ad2e; color: white; border: none;
-            padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold;
-            transition: 0.2s;
+            padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer;
         }
-        .nav-btn:hover { background: #52c938; }
 
-        /* GAME LAYOUT */
-        #game-container {
+        /* 3. MAIN LAYOUT (ADJUSTED FOR LONG WORDS) */
+        #main-wrapper {
             display: grid;
-            grid-template-columns: 1fr 400px; /* Locked right panel width */
-            gap: 20px;
-            width: 98%;
-            max-width: 1600px;
-            margin: 0 auto;
-            flex-grow: 1;
-            padding-bottom: 15px;
-            min-height: 0; /* Prevents grid from expanding past viewport */
+            grid-template-columns: 1fr 450px; /* Widened right column for long words */
+            width: 100vw; height: 100vh;
+            padding-top: 85px; 
+            box-sizing: border-box;
         }
+
+        #left-col { padding: 15px; display: flex; align-items: center; justify-content: center; }
         
         #picture-box {
             position: relative;
+            width: 100%; height: 100%;
             border: 8px solid #FBD000;
+            border-radius: 25px;
             background-size: cover;
             background-position: center;
-            box-shadow: 0 0 30px rgba(0,0,0,0.8);
-            border-radius: 20px;
             background-color: #000;
-            height: 100%;
-            width: 100%; /* Occupies full left side */
         }
 
-        /* SIDE PANEL STABILITY */
-        #side-panel {
+        /* 4. SIDE PANEL STABILITY */
+        #right-col {
+            padding: 15px;
             display: flex;
             flex-direction: column;
             gap: 12px;
-            height: 100%;
         }
-        
+
         .panel-section {
-            background: rgba(0, 0, 0, 0.85);
-            border: 3px solid #FBD000; 
-            border-radius: 15px;
+            background: rgba(0,0,0,0.85);
+            border: 3px solid #FBD000;
+            border-radius: 20px;
             padding: 15px;
             text-align: center;
-            color: white;
-            overflow: hidden;
+            flex-shrink: 0;
         }
 
-        #clue-display { flex: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; } 
-        #bank-section { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 100px; }
-        #answer-section { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 100px; }
+        /* Fixed Heights to prevent jumping when content changes */
+        #clue-display { height: 230px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #bank-section { height: 130px; display: flex; align-items: center; justify-content: center; }
+        #answer-section { height: 110px; display: flex; align-items: center; justify-content: center; }
 
-        #clue-img { 
-            max-width: 90%; max-height: 200px; 
-            display: none; border: 3px solid white; border-radius: 10px; margin-top: 10px;
-        }
+        #header { font-size: 24px; text-shadow: 2px 2px 0 #E52521; margin-bottom: 5px; text-align: center; }
 
-        /* LETTER BOX STABILITY */
+        /* 5. LETTERS & SLOTS */
         .hidden-letter {
             position: absolute; width: 50px; height: 50px;
-            background: rgba(255, 255, 255, 0.15); 
-            border: 1px solid rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.15);
+            border: 2px solid rgba(255, 255, 255, 0.4);
             border-radius: 50%; display: flex; justify-content: center; align-items: center;
-            color: rgba(255, 255, 255, 0.7); 
-            font-size: 26px; font-weight: bold;
-            cursor: pointer; z-index: 5; transform: translate(-50%, -50%);
+            color: rgba(255, 255, 255, 0.7); font-size: 28px; font-weight: bold;
+            transform: translate(-50%, -50%); cursor: pointer;
         }
 
         .clickable-letter {
-            width: 45px; height: 45px; /* Fixed size */
-            background: #E52521; color: white; border: 2px solid #000;
-            display: flex; justify-content: center; align-items: center; font-size: 22px;
-            cursor: pointer; border-radius: 8px; box-shadow: 2px 2px 0 #000; font-weight: bold;
-            flex-shrink: 0;
+            width: 48px; height: 48px;
+            background: #E52521; border: 2px solid #000;
+            border-radius: 10px; display: flex; justify-content: center; align-items: center;
+            font-size: 24px; font-weight: bold; cursor: pointer;
+            box-shadow: 3px 3px 0 #000; flex-shrink: 0;
+        }
+
+        #answer-zone {
+            display: flex; flex-direction: row; flex-wrap: nowrap; /* Forces one line */
+            gap: 4px; justify-content: center; width: 100%;
         }
 
         .slot {
-            width: 40px; height: 50px; /* Fixed size */
-            border: 2px solid #FBD000; background: rgba(255,255,255,0.05);
-            color: #FBD000; display: flex; justify-content: center; align-items: center;
-            font-size: 24px; font-weight: bold; border-radius: 6px; cursor: pointer;
-            flex-shrink: 0;
+            width: 33px; height: 50px; /* Slimmer to fit 11-12 letters in one line */
+            border: 2px solid #FBD000; border-radius: 6px;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 24px; color: #FBD000; font-weight: bold;
+            flex-shrink: 0; background: rgba(255,255,255,0.1);
         }
 
+        #letter-bank { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; width: 100%; }
+
         #action-btn {
-            width: 100%; padding: 15px; font-size: 22px; font-weight: bold; cursor: pointer;
-            border-radius: 12px; border: none; background: #43ad2e; color: white;
-            box-shadow: 0 4px 0 #2d7a1f;
+            width: 100%; padding: 18px; font-size: 24px; font-weight: bold;
+            background: #43ad2e; color: white; border: none; border-radius: 15px;
+            box-shadow: 0 5px 0 #2d7a1f; cursor: pointer; flex-shrink: 0;
+        }
+
+        #clue-img { 
+            max-width: 95%; max-height: 160px; 
+            display: none; border: 3px solid white; border-radius: 12px; margin-top: 10px;
         }
 
         /* OVERLAYS */
         #start-overlay, #victory-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 2000; display: flex;
+            background: rgba(0,0,0,0.98); z-index: 5000; display: flex;
             flex-direction: column; align-items: center; justify-content: center;
         }
     </style>
@@ -167,8 +146,8 @@
 <div id="master-background"></div>
 
 <div id="start-overlay">
-    <h1 style="color:white; font-size: 70px; text-shadow: 5px 5px 0 #E52521; margin-bottom: 20px;">SPORTS MYSTERY</h1>
-    <button style="padding: 20px 60px; font-size: 30px; background: #43ad2e; color: white; border: 4px solid #FBD000; border-radius: 20px; cursor: pointer;" onclick="startGame()">START GAME</button>
+    <h1 style="font-size: clamp(40px, 10vw, 80px); text-shadow: 6px 6px 0 #E52521; margin-bottom: 20px;">SPORTS MYSTERY</h1>
+    <button style="padding: 20px 60px; font-size: 30px; background: #43ad2e; border: 4px solid #FBD000; border-radius: 25px; color: white; cursor: pointer;" onclick="startGame()">PLAY NOW</button>
 </div>
 
 <div id="top-controls">
@@ -177,35 +156,36 @@
     <button class="nav-btn" onclick="skipRound()">NEXT</button>
 </div>
 
-<div id="header-container">
-    <div id="header">LETTERS TO FIND: 0</div>
-</div>
+<div id="main-wrapper">
+    <div id="left-col">
+        <div id="picture-box"></div>
+    </div>
 
-<div id="game-container">
-    <div id="picture-box"></div>
-    <div id="side-panel">
-        <div class="panel-section" id="clue-display">
-            <h3 style="margin: 0; color: #FBD000; font-size: 24px;">CLUE</h3>
-            <div id="lock-msg" style="margin-top: 10px;">Find letters to reveal!</div>
-            <img id="clue-img" src="" alt="Clue">
-        </div>
+    <div id="right-col">
+        <div id="header">LETTERS TO FIND: <span id="find-count">0</span></div>
         
+        <div class="panel-section" id="clue-display">
+            <h3 style="margin:0; color:#FBD000;">CLUE</h3>
+            <p id="lock-msg">Collect all letters to reveal the sport!</p>
+            <img id="clue-img" src="">
+        </div>
+
         <div class="panel-section" id="bank-section">
-            <div id="letter-bank" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;"></div>
+            <div id="letter-bank"></div>
         </div>
 
         <button id="action-btn" onclick="checkAnswer()">CHECK ANSWER</button>
 
         <div class="panel-section" id="answer-section">
-            <div id="answer-zone" style="display:flex; gap:6px; justify-content:center; flex-wrap:wrap;"></div>
+            <div id="answer-zone"></div>
         </div>
     </div>
 </div>
 
 <div id="victory-overlay" style="display:none;">
-    <h1 style="font-size: 60px; color: #FBD000;">STRIKE! 🏆</h1>
-    <p id="time-flash" style="font-size: 30px; color: white; margin-bottom: 20px;"></p>
-    <button style="padding: 15px 40px; font-size: 22px; background:#43ad2e; color:white; border:none; border-radius:12px; cursor:pointer;" onclick="handleNextClick()">NEXT ROUND</button>
+    <h1 style="font-size: 70px; color: #FBD000;">STRIKE! 🏆</h1>
+    <p id="time-flash" style="font-size: 30px; margin-bottom: 25px;"></p>
+    <button style="padding: 20px 50px; font-size: 24px; background:#43ad2e; color:white; border-radius:15px; border:none; cursor:pointer;" onclick="handleNextClick()">NEXT LEVEL</button>
 </div>
 
 <audio id="bg-music" loop src="https://raw.githubusercontent.com/marionbunyi/sports-mario/main/Energetic%20Rock%20Background%20Music%20For%20Sports%20%26%20Workout%20Videos.mp3"></audio>
@@ -224,11 +204,16 @@
         { name: "VOLLEYBALL", img: "volleyball" }
     ];
 
-    const safePos = [{t:15,l:15}, {t:20,l:80}, {t:80,l:20}, {t:85,l:85}, {t:50,l:50}, {t:30,l:50}, {t:70,l:50}, {t:50,l:15}, {t:50,l:85}, {t:15,l:50}, {t:85,l:50}];
+    // Added more random positions for variety
+    const safePos = [
+        {t:15,l:15}, {t:20,l:85}, {t:85,l:15}, {t:80,l:80}, 
+        {t:50,l:50}, {t:30,l:50}, {t:70,l:50}, {t:50,l:20}, 
+        {t:50,l:80}, {t:10,l:50}, {t:90,l:50}, {t:30,l:30}, {t:70,l:70}
+    ];
 
     let currentRoundIndex = 0;
     let foundLetters = [];
-    let lettersLeft = 0;
+    let lettersToFind = 0;
     let timerInterval;
     let roundStartTime;
 
@@ -242,13 +227,13 @@
 
     function initRound() {
         const sport = sports[currentRoundIndex];
-        lettersLeft = sport.name.length;
+        lettersToFind = sport.name.length;
         foundLetters = [];
         clearInterval(timerInterval);
         roundStartTime = Date.now();
         timerInterval = setInterval(updateTimer, 1000);
 
-        document.getElementById('header').innerText = `LETTERS TO FIND: ${lettersLeft}`;
+        updateCount();
         document.getElementById('picture-box').style.backgroundImage = `url('https://raw.githubusercontent.com/marionbunyi/sports-mario/main/hidden%20${sport.img}.png')`;
         document.getElementById('clue-img').src = `https://raw.githubusercontent.com/marionbunyi/sports-mario/main/${sport.img}%20clue.png`;
         document.getElementById('clue-img').style.display = 'none';
@@ -285,9 +270,9 @@
                 document.getElementById('snd-click').play();
                 l.style.display = 'none';
                 foundLetters.push({char, used: false});
-                lettersLeft--;
-                document.getElementById('header').innerText = `LETTERS TO FIND: ${lettersLeft}`;
-                if(lettersLeft === 0) {
+                lettersToFind--;
+                updateCount();
+                if(lettersToFind === 0) {
                     document.getElementById('lock-msg').style.display = 'none';
                     document.getElementById('clue-img').style.display = 'block';
                 }
@@ -295,6 +280,10 @@
             };
             picBox.appendChild(l);
         });
+    }
+
+    function updateCount() {
+        document.getElementById('find-count').innerText = lettersToFind;
     }
 
     function renderBank() {
