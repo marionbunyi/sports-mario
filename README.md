@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mario Sports Mystery</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
@@ -11,122 +11,109 @@
             font-family: 'Arial Rounded MT Bold', sans-serif;
             background-color: #5C94FC;
             display: flex; flex-direction: column;
-            margin: 0; padding: 15px; color: white;
-            min-height: 100vh; width: 100vw; overflow-x: hidden; user-select: none;
+            margin: 0; padding: 10px; color: white;
+            height: 100vh; width: 100vw; overflow: hidden; user-select: none;
         }
 
         #top-bar {
-            position: fixed; top: 15px; left: 15px;
+            position: fixed; top: 10px; left: 10px;
             background: rgba(0,0,0,0.8); border: 3px solid #FBD000;
-            border-radius: 15px; padding: 10px; display: flex; gap: 10px; z-index: 10;
+            border-radius: 15px; padding: 5px; display: flex; gap: 8px; z-index: 10;
         }
 
         #timer-box {
-            position: fixed; top: 15px; right: 15px;
+            position: fixed; top: 10px; right: 10px;
             background: rgba(0,0,0,0.8); border: 3px solid #FBD000;
-            border-radius: 15px; padding: 10px 20px; font-size: 24px; color: #FBD000;
-            z-index: 10; min-width: 120px; text-align: center;
+            border-radius: 15px; padding: 8px 15px; font-size: 20px; color: #FBD000;
+            z-index: 10; min-width: 100px; text-align: center;
         }
         
         .nav-btn {
             background: #43ad2e; color: white; border: none;
-            padding: 8px 15px; border-radius: 8px; cursor: pointer;
-            font-weight: bold; font-size: 16px; box-shadow: 0 3px 0 rgba(0,0,0,0.3);
+            padding: 6px 12px; border-radius: 8px; cursor: pointer;
+            font-weight: bold; font-size: 14px; box-shadow: 0 3px 0 rgba(0,0,0,0.3);
         }
-        .nav-btn:active { transform: translateY(2px); box-shadow: none; }
 
         #header {
-            font-size: 45px; text-align: center; margin-bottom: 10px; margin-top: 60px;
-            text-shadow: 4px 4px 0 #E52521; flex-shrink: 0;
+            font-size: clamp(24px, 5vh, 40px); text-align: center; margin-top: 55px; margin-bottom: 10px;
+            text-shadow: 3px 3px 0 #E52521; flex-shrink: 0;
         }
 
         #game-container {
-            display: flex; flex-direction: row; flex-grow: 1; gap: 20px; width: 100%; height: 75vh;
+            display: flex; flex-direction: row; flex-grow: 1; gap: 15px; width: 100%; height: calc(100vh - 120px);
+            overflow: hidden;
         }
         
         #picture-box {
-            position: relative; flex: 2; border: 12px solid #FBD000;
+            position: relative; flex: 1.8; border: 8px solid #FBD000;
             background-size: contain; background-position: center; background-repeat: no-repeat;
-            box-shadow: 0 0 40px rgba(0,0,0,0.6); border-radius: 20px; background-color: #000;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5); border-radius: 20px; background-color: #000;
         }
 
-        /* SIDE PANEL ADJUSTMENTS */
         #side-panel { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 15px; 
-            height: 100%; /* Occupy full height */
+            flex: 1; display: flex; flex-direction: column; gap: 10px; height: 100%;
         }
         
         .panel-section {
-            background: rgba(0, 0, 0, 0.8); border: 6px solid #FBD000;
-            border-radius: 25px; padding: 15px; text-align: center;
+            background: rgba(0, 0, 0, 0.8); border: 4px solid #FBD000;
+            border-radius: 20px; padding: 10px; text-align: center;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            flex-grow: 1; /* This makes sections expand to fill the blank space */
         }
-        
-        #clue-img { max-width: 100%; max-height: 200px; display: none; border: 3px solid white; border-radius: 10px; }
+
+        #clue-display { flex: 1.5; min-height: 0; }
+        #letter-bank { flex: 1.2; min-height: 0; overflow-y: auto; }
+        #answer-zone { flex: 1; min-height: 0; }
+
+        #clue-img { max-width: 100%; max-height: 85%; display: none; border: 2px solid white; border-radius: 10px; }
         
         #letter-bank { 
-            display: flex; 
-            flex-direction: row; 
-            flex-wrap: wrap; 
-            justify-content: center; 
-            align-content: center; 
-            gap: 10px; 
-            min-height: 120px; 
+            display: flex; flex-direction: row; flex-wrap: wrap; 
+            justify-content: center; align-content: center; gap: 6px; 
         }
         
         .clickable-letter {
-            width: 45px; height: 65px; background: #E52521; color: white; border: 2px solid #000;
-            display: flex; justify-content: center; align-items: center; font-size: 30px;
-            cursor: pointer; border-radius: 8px; box-shadow: 3px 3px 0 #000;
+            width: clamp(35px, 4vw, 45px); height: clamp(50px, 6vh, 65px); 
+            background: #E52521; color: white; border: 2px solid #000;
+            display: flex; justify-content: center; align-items: center; font-size: 24px;
+            cursor: pointer; border-radius: 8px; box-shadow: 2px 2px 0 #000;
         }
 
         #action-btn {
-            width: 100%; padding: 15px; font-size: 24px; font-weight: bold; cursor: pointer;
-            border-radius: 15px; border: none; box-shadow: 0 6px 0 rgba(0,0,0,0.4);
-            background: #43ad2e; color: white;
+            width: 100%; padding: 12px; font-size: 20px; font-weight: bold; cursor: pointer;
+            border-radius: 12px; border: none; box-shadow: 0 4px 0 rgba(0,0,0,0.4);
+            background: #43ad2e; color: white; margin-bottom: 5px;
         }
 
         #answer-zone {
-            display: flex; flex-direction: row;
-            flex-wrap: wrap; justify-content: center; align-items: center;
-            gap: 8px; background: white; border-radius: 20px; border: 6px solid #43ad2e; padding: 15px;
-            min-height: 100px;
+            display: flex; flex-direction: row; flex-wrap: wrap; 
+            justify-content: center; align-items: center;
+            gap: 5px; background: white; border-radius: 15px; border: 4px solid #43ad2e; padding: 10px;
         }
         
-        .wrong-flash { background: #ffcccc !important; border-color: #E52521 !important; animation: shake 0.3s; }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
-        }
-
         .slot {
-            width: 40px; height: 60px; border: 2px solid #333; background: #eee;
+            width: clamp(30px, 3.5vw, 40px); height: clamp(45px, 5.5vh, 60px); 
+            border: 2px solid #333; background: #eee;
             color: #E52521; display: flex; justify-content: center; align-items: center;
-            font-size: 28px; font-weight: bold; cursor: pointer;
+            font-size: 22px; font-weight: bold; cursor: pointer;
         }
 
         .hidden-letter {
-            position: absolute; width: 65px; height: 65px;
+            position: absolute; width: 55px; height: 55px;
             background: rgba(255, 255, 255, 0.2);
             border: 2px solid rgba(255, 255, 255, 0.4);
             border-radius: 50%; display: flex;
             justify-content: center; align-items: center;
             color: rgba(255, 255, 255, 0.6);
-            font-size: 38px; font-weight: bold;
+            font-size: 30px; font-weight: bold;
             cursor: pointer; z-index: 5;
         }
 
-        @media only screen and (max-width: 1024px) {
+        /* IPAD VERTICAL STACKING */
+        @media only screen and (max-width: 900px), (orientation: portrait) {
+            #game-container { flex-direction: column; height: auto; overflow-y: auto; }
+            #picture-box { height: 40vh; width: 100%; flex: none; }
+            #side-panel { width: 100%; height: auto; }
             body { overflow-y: auto; }
-            #game-container { flex-direction: column; height: auto; }
-            #picture-box { height: 45vh; width: 100%; flex: none; }
-            #header { font-size: 32px; }
-            #side-panel { height: auto; }
         }
 
         #victory-overlay {
@@ -134,7 +121,7 @@
             background: rgba(0,0,0,0.95); z-index: 1000; flex-direction: column;
             align-items: center; justify-content: center; text-align: center;
         }
-        #victory-overlay h1 { font-size: 80px; color: #FBD000; text-shadow: 0 0 40px red; margin: 10px; }
+        #victory-overlay h1 { font-size: clamp(40px, 10vw, 80px); color: #FBD000; text-shadow: 0 0 40px red; }
         
         .found-anim { animation: fadeOut 0.4s forwards; pointer-events: none; }
         @keyframes fadeOut { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(4); opacity: 0; } }
@@ -155,23 +142,23 @@
     <div id="picture-box"></div>
     <div id="side-panel">
         <div class="panel-section" id="clue-display">
-            <h2 style="margin: 0; font-size: 28px; color: #FBD000;">CLUE</h2>
-            <div id="lock-msg" style="font-size: 18px;">🔒 Find letters to reveal</div>
+            <h2 style="margin: 0 0 5px 0; font-size: 20px; color: #FBD000;">CLUE</h2>
+            <div id="lock-msg" style="font-size: 14px;">🔒 Find letters to reveal</div>
             <img id="clue-img" src="" alt="Clue">
         </div>
         <div class="panel-section" id="letter-bank"></div>
         <div id="button-area">
             <button id="action-btn" onclick="checkAnswer()">CHECK ANSWER</button>
         </div>
-        <div id="answer-zone"></div>
+        <div class="panel-section" id="answer-zone"></div>
     </div>
 </div>
 
 <div id="victory-overlay">
     <h1 id="victory-text">CORRECT!</h1>
-    <p id="time-flash" style="font-size: 35px; color: #FBD000; margin: 0;"></p>
-    <p id="victory-sub" style="font-size: 24px; color: white; max-width: 80%; margin-top: 10px;"></p>
-    <button id="next-btn" style="width: 300px; height: 70px; font-size: 24px; background:#43ad2e; color:white; border:none; border-radius:15px; cursor:pointer; margin-top: 20px;" onclick="handleNextClick()">NEXT ➡️</button>
+    <p id="time-flash" style="font-size: 30px; color: #FBD000; margin: 0;"></p>
+    <p id="victory-sub" style="font-size: 20px; color: white; max-width: 80%; margin-top: 10px;"></p>
+    <button id="next-btn" style="width: 280px; height: 60px; font-size: 22px; background:#43ad2e; color:white; border:none; border-radius:15px; cursor:pointer; margin-top: 20px;" onclick="handleNextClick()">NEXT ➡️</button>
 </div>
 
 <audio id="bg-music" loop src="https://raw.githubusercontent.com/marionbunyi/sports-mario/main/Energetic%20Rock%20Background%20Music%20For%20Sports%20%26%20Workout%20Videos.mp3"></audio>
@@ -196,7 +183,6 @@
     let foundLetters = [];
     let lettersLeft = 0;
     let roundsCompleted = sports.map(() => false);
-
     let roundStartTime;
     let timerInterval;
 
@@ -222,19 +208,14 @@
         foundLetters = [];
         
         resetAndStartTimer();
-
         document.getElementById('header').innerText = `LETTERS TO FIND: ${lettersLeft}`;
         document.getElementById('picture-box').style.backgroundImage = `url('https://raw.githubusercontent.com/marionbunyi/sports-mario/main/hidden%20${sport.img}.png')`;
-        
-        /* UPDATED CLUE IMAGE PATH */
         document.getElementById('clue-img').src = `https://raw.githubusercontent.com/marionbunyi/sports-mario/main/${sport.img}%20clue.png`;
-        
         document.getElementById('clue-img').style.display = 'none';
         document.getElementById('lock-msg').style.display = 'block';
         document.getElementById('victory-overlay').style.display = 'none';
-        
-        document.getElementById('action-btn').innerText = "CHECK ANSWER";
         document.getElementById('letter-bank').innerHTML = '';
+        
         const zone = document.getElementById('answer-zone');
         zone.innerHTML = '';
         zone.classList.remove('wrong-flash');
@@ -263,14 +244,8 @@
 
     function collect(el, char) {
         if (el.classList.contains('found-anim')) return;
-        
         const bg = document.getElementById('bg-music');
-        if (bg.paused) { 
-            bg.volume = 0.03;
-            bg.currentTime = 10;
-            bg.play(); 
-        }
-        
+        if (bg.paused) { bg.volume = 0.03; bg.play(); }
         const s = document.getElementById('snd-click');
         s.pause(); s.currentTime = 0.55; s.play();
         
@@ -320,14 +295,13 @@
         let guess = "";
         document.querySelectorAll('.slot').forEach(s => guess += s.innerText);
         const correctWord = sports[currentRoundIndex].name.replace(/\s/g, '');
-        const zone = document.getElementById('answer-zone');
-
         if (guess === correctWord) {
             clearInterval(timerInterval);
             roundsCompleted[currentRoundIndex] = true;
             document.getElementById('snd-win').play();
             showVictory();
         } else {
+            const zone = document.getElementById('answer-zone');
             zone.classList.add('wrong-flash');
             setTimeout(() => zone.classList.remove('wrong-flash'), 500);
         }
@@ -335,48 +309,33 @@
 
     function showVictory() {
         const overlay = document.getElementById('victory-overlay');
-        const title = document.getElementById('victory-text');
-        const sub = document.getElementById('victory-sub');
-        const timeFlash = document.getElementById('time-flash');
-        const btn = document.getElementById('next-btn');
-
         const finishTime = document.getElementById('timer-box').innerText;
-        timeFlash.innerText = `FINISH TIME: ${finishTime}`;
-
+        document.getElementById('time-flash').innerText = `FINISH TIME: ${finishTime}`;
         const remainingCount = roundsCompleted.filter(r => !r).length;
 
         if (remainingCount === 0) {
-            title.innerText = "CONGRATULATIONS!";
-            sub.innerText = "YOU ANSWERED EVERYTHING CORRECTLY!";
-            btn.innerText = "RESTART GAME";
-            confetti({ particleCount: 500, spread: 160, origin: { y: 0.6 } });
+            document.getElementById('victory-text').innerText = "CONGRATULATIONS!";
+            document.getElementById('victory-sub').innerText = "YOU ANSWERED EVERYTHING CORRECTLY!";
+            document.getElementById('next-btn').innerText = "RESTART GAME";
+            confetti({ particleCount: 400, spread: 100, origin: { y: 0.6 } });
         } else {
-            title.innerText = "CORRECT!";
-            sub.innerText = "";
-            btn.innerText = "NEXT ROUND ➡️";
+            document.getElementById('victory-text').innerText = "CORRECT!";
+            document.getElementById('victory-sub').innerText = "";
+            document.getElementById('next-btn').innerText = "NEXT ROUND ➡️";
         }
         overlay.style.display = 'flex';
     }
 
     function handleNextClick() {
         const remainingIdx = roundsCompleted.findIndex(r => r === false);
-        if (remainingIdx === -1) {
-            location.reload();
-        } else {
+        if (remainingIdx === -1) { location.reload(); } else {
             currentRoundIndex = remainingIdx;
             initRound();
         }
     }
 
-    function skipRound() {
-        currentRoundIndex = (currentRoundIndex + 1) % sports.length;
-        initRound();
-    }
-
-    function prevRound() {
-        currentRoundIndex = (currentRoundIndex - 1 + sports.length) % sports.length;
-        initRound();
-    }
+    function skipRound() { currentRoundIndex = (currentRoundIndex + 1) % sports.length; initRound(); }
+    function prevRound() { currentRoundIndex = (currentRoundIndex - 1 + sports.length) % sports.length; initRound(); }
 
     initRound();
 </script>
