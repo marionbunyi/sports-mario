@@ -9,7 +9,9 @@
         * { box-sizing: border-box; }
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            overflow-x: hidden; font-family: 'Arial Rounded MT Bold', sans-serif;
+            /* CHANGED: Allow scrolling globally if content overflows */
+            overflow: auto; 
+            font-family: 'Arial Rounded MT Bold', sans-serif;
             background-color: #000; color: white;
         }
 
@@ -35,13 +37,18 @@
         /* 3. RESPONSIVE MAIN CONTAINER */
         #main-container {
             display: flex; flex-direction: row;
-            padding: 80px 20px 20px 20px; width: 100vw; height: 100vh; gap: 20px;
+            padding: 80px 20px 20px 20px; 
+            /* CHANGED: Removed fixed height/width to allow scrollable overflow */
+            min-width: 100vw; 
+            min-height: 100vh; 
+            gap: 20px;
         }
 
         #photo-section {
             flex: 1.2; border: 6px solid #FBD000; border-radius: 25px;
             position: relative; background-color: #111;
             background-size: cover; background-position: center;
+            min-height: 400px; /* Ensures photo has a presence even when scrolling */
         }
 
         #control-panel {
@@ -56,13 +63,13 @@
             flex-shrink: 0;
         }
 
-        #clue-card { height: 35%; }
-        #bank-card { height: 25%; }
-        #answer-card { height: 15%; }
+        #clue-card { height: 35%; min-height: 150px; }
+        #bank-card { height: 25%; min-height: 100px; }
+        #answer-card { height: 15%; min-height: 80px; }
 
         /* MOBILE OVERRIDE */
         @media (max-width: 850px) {
-            #main-container { flex-direction: column; height: auto; overflow-y: auto; }
+            #main-container { flex-direction: column; height: auto; }
             #photo-section { width: 100%; height: 400px; flex: none; }
             #control-panel { width: 100%; max-width: none; flex: none; padding-bottom: 40px; }
         }
