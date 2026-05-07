@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+    <title>Sports Mystery</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body, html {
+            margin: 0; padding: 0; 
+            width: 100%; height: 100%;
+            overflow: hidden;
+            font-family: 'Arial Rounded MT Bold', sans-serif;
+            background-color: #000; color: white;
+        }
+
+        #bg-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('https://raw.githubusercontent.com/marionbunyi/sports-warm-up/main/backgroundphoto.jpg');
+            background-size: cover; background-position: center;
+            opacity: 0.2; z-index: -1;
+        }
+
+        #nav-bar {
+            position: sticky; top: 0; width: 100%; height: 60px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 15px; background: rgba(0,0,0,0.9);
+            border-bottom: 3px solid #FBD000; z-index: 1000;
+        }
+
+        #timer-display { font-size: 20px; color: #FBD000; font-weight: bold; }
+        .btn-nav { background: #43ad2e; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+
+        #main-container {
+            display: flex; flex-direction: column; 
+            padding: 15px; gap: 15px;
+            max-width: 1400px; margin: 0 auto;
+            height: calc(100vh - 60px);
+        }
+
+        @media (min-width: 900px) {
+            #main-container { flex-direction: row; align-items: stretch; }
+            #photo-section { flex: 1.6; }
+            #control-panel { flex: 1; }
+        }
+
+        #photo-section {
+            width: 100%; aspect-ratio: 4/3;
+            border: 6px solid #FBD000; border-radius: 25px;
+            position: relative; background-color: #111;
+            background-size: cover; background-position: center;
+            overflow: hidden; 
+            cursor: default; /* Standard arrow cursor */
+        }
+
+        #secret-hint-btn {
+            width: 35px; height: 35px;
+            background: rgba(251, 208, 0, 0.2);
+            border: 1px solid #FBD000; border-radius: 50%;
+            color: #FBD000; font-size: 18px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+
+        .hidden-letter {
+            position: absolute; width: 50px; height: 50px;
+            display: flex; align-items: center; justify-content: center;
+            color: rgba(255, 255, 255, 0.25);
+            font-weight: bold; cursor: pointer; transform: translate(-50%, -50%);
+            font-size: 24px; z-index: 5;
+        }
+
+        .hint-flash {
+            background: #FBD000 !important; color: black !important;
+            border-radius: 50%; border: 3px solid white !important;
+            transform: translate(-50%, -50%) scale(1.8) !important;
+            z-index: 100 !important;
+        }
+
+        #control-panel { display: flex; flex-direction: column; gap: 10px; }
+        
+        .stats-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 15px; background: rgba(255,255,255,0.1); border-radius: 12px; height: 50px;
+        }
+
+        .card {
+            background: rgba(0,0,0,0.85); border: 3px solid #FBD000;
+            border-radius: 20px; padding: 10px; text-align: center;
+            display: flex; align-items: center; justify-content: center; flex: 1;
+        }
+
+        #letter-bank { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+        .bank-letter {
+            width: 42px; height: 48px; background: #E52521;
+            border: 2px solid #fff; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 20px; cursor: pointer;
+            box-shadow: 0 3px 0 #8b120f;
+        }
+
+        #answer-zone { display: inline-flex; gap: 4px; }
+        .slot {
+            width: 40px; height: 50px; border: 2px solid #FBD000;
+            border-radius: 8px; background: rgba(255,255,255,0.05);
+            display: flex; align-items: center; justify-content: center;
+            color: #FBD000; font-weight: bold; font-size: 22px;
+        }
+
+        #check-btn {
+            width: 100%; padding: 15px; background: #43ad2e; color: white;
+            border: none; border-radius: 15px; font-size: 20px; font-weight: bold;
+            box-shadow: 0 5px 0 #2d7a1f; cursor: pointer;
+        }
+
+        #clue-img { max-height: 120px; border-radius: 10px; display: none; }
+
+        #start-overlay, #win-overlay, #gameover-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 3000; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center;
+            background: rgba(0,0,0,0.95);
+        }
+
+        .flash-msg { font-size: 70px; font-weight: 900; margin: 10px; }
+        .hands-up { font-size: 80px; color: #FBD000; font-weight: 900; margin: 20px 0; }
+    </style>
+</head>
+<body>
+
+<div id="bg-layer"></div>
+<audio id="bg-music" loop src="https://raw.githubusercontent.com/marionbunyi/sports-warm-up/e3ac7bdb78353c660ee19b6b1e5585e7763c2350/Energetic%20Rock%20Background%20Music%20For%20Sports%20%26%20Workout%20Videos.mp3"></audio>
+<audio id="snd-win" src="https://raw.githubusercontent.com/marionbunyi/sports-mario/main/Correct%20answer%20sound%20effect%20_%20No%20copyright.mp3"></audio>
+
+<div id="start-overlay">
+    <h1 style="font-size: 50px; color: #FBD000;">SPORTS MYSTERY</h1>
+    <p style="font-size: 20px;">Find the letters! You only have 5 extra clicks allowed.</p>
+    <button id="check-btn" style="width: 250px;" onclick="startGame()">START GAME</button>
+</div>
+
+<div id="nav-bar">
+    <button class="btn-nav" onclick="changeRound(-1)">BACK</button>
+    <div id="timer-display">00:00</div>
+    <button class="btn-nav" onclick="changeRound(1)">NEXT</button>
+</div>
+
+<div id="main-container">
+    <div id="photo-section" onclick="countPhotoClick()"></div>
+
+    <div id="control-panel">
+        <div class="stats-row">
+            <div style="color: #FBD000; font-size: 18px;">MISSES: <span id="click-count">0/5</span></div>
+            <div style="color: #43ad2e; font-size: 18px;">FOUND: <span id="found-count">0/0</span></div>
+            <div id="secret-hint-btn" onclick="showHints()">?</div>
+        </div>
+        
+        <div class="card" id="clue-card" style="min-height: 140px;">
+            <div id="lock-msg" style="color: #666; font-size: 18px;">Find letters to unlock clue</div>
+            <img id="clue-img" src="">
+        </div>
+
+        <div class="card" id="bank-card"><div id="letter-bank"></div></div>
+
+        <button id="check-btn" onclick="checkAnswer()">CHECK ANSWER</button>
+
+        <div class="card" id="answer-card" style="min-height: 90px;"><div id="answer-zone"></div></div>
+    </div>
+</div>
+
+<div id="win-overlay" style="display:none;">
+    <h1 class="flash-msg" style="color: #43ad2e;">CORRECT!</h1>
+    <div class="hands-up">HANDS UP!</div>
+    <button class="btn-nav" style="padding: 15px 50px; font-size: 24px;" onclick="changeRound(1)">NEXT LEVEL</button>
+</div>
+
+<div id="gameover-overlay" style="display:none;">
+    <h1 class="flash-msg" style="color: #E52521;">GAME OVER</h1>
+    <p style="font-size: 24px;">Too many clicks! Try the next one.</p>
+    <button class="btn-nav" style="padding: 15px 50px; font-size: 24px; margin-top: 20px;" onclick="changeRound(1)">NEXT ROUND</button>
+</div>
+
+<script>
+    const sports = [
+        { name: "BASKETBALL", img: "basketball" },
+        { name: "TENNIS", img: "tennis" },
+        { name: "SOCCER", img: "soccer" },
+        { name: "BADMINTON", img: "badminton" },
+        { name: "BASEBALL", img: "baseball" },
+        { name: "SWIMMING", img: "swimming" },
+        { name: "TABLETENNIS", img: "table tennis" },
+        { name: "VOLLEYBALL", img: "volleyball" }
+    ];
+
+    let currentIdx = 0, found = [], startTime, timerRef, misses = 0;
+    const maxMisses = 5;
+
+    function startGame() {
+        document.getElementById('start-overlay').style.display = 'none';
+        const music = document.getElementById('bg-music');
+        music.volume = 0.3;
+        music.addEventListener('timeupdate', function() { if (this.currentTime > 20) this.currentTime = 0; });
+        music.play().catch(() => {});
+        init();
+    }
+
+    function init() {
+        const s = sports[currentIdx];
+        found = [];
+        misses = 0;
+        
+        clearInterval(timerRef);
+        startTime = Date.now();
+        timerRef = setInterval(updateTimer, 1000);
+        
+        const pic = document.getElementById('photo-section');
+        pic.innerHTML = '';
+        
+        const imgUrl = `https://raw.githubusercontent.com/marionbunyi/sports-mario/main/hidden%20${s.img}.png`;
+        pic.style.backgroundImage = `url('${imgUrl}')`;
+        spawnLetters(s.name);
+
+        updateUI();
+        document.getElementById('win-overlay').style.display = 'none';
+        document.getElementById('gameover-overlay').style.display = 'none';
+        document.getElementById('letter-bank').innerHTML = '';
+        document.getElementById('clue-img').src = `https://raw.githubusercontent.com/marionbunyi/sports-mario/main/${s.img}%20clue.png`;
+        document.getElementById('clue-img').style.display = 'none';
+        document.getElementById('lock-msg').style.display = 'block';
+
+        const zone = document.getElementById('answer-zone');
+        zone.innerHTML = '';
+        s.name.split('').forEach(() => {
+            let sl = document.createElement('div');
+            sl.className = 'slot';
+            sl.onclick = function() {
+                if(this.innerText) {
+                    let item = found.find(f => f.char === this.innerText && f.used);
+                    if(item) { item.used = false; this.innerText = ''; renderBank(); }
+                }
+            };
+            zone.appendChild(sl);
+        });
+    }
+
+    function spawnLetters(name) {
+        const pic = document.getElementById('photo-section');
+        name.split('').forEach(char => {
+            let l = document.createElement('div');
+            l.className = 'hidden-letter';
+            l.innerText = char;
+            l.style.top = (Math.random() * 70 + 15) + "%";
+            l.style.left = (Math.random() * 70 + 15) + "%";
+            l.onclick = (e) => {
+                e.stopPropagation(); 
+                l.style.display = 'none';
+                found.push({char, used: false});
+                if(found.length === name.length) {
+                    document.getElementById('lock-msg').style.display = 'none';
+                    document.getElementById('clue-img').style.display = 'block';
+                }
+                renderBank();
+                updateUI();
+            };
+            pic.appendChild(l);
+        });
+    }
+
+    function countPhotoClick() {
+        misses++;
+        updateUI();
+        if(misses >= maxMisses) {
+            clearInterval(timerRef);
+            document.getElementById('gameover-overlay').style.display = 'flex';
+        }
+    }
+
+    function updateUI() {
+        document.getElementById('click-count').innerText = `${misses}/${maxMisses}`;
+        document.getElementById('found-count').innerText = `${found.length}/${sports[currentIdx].name.length}`;
+    }
+
+    function showHints() {
+        const remaining = document.querySelectorAll('.hidden-letter');
+        remaining.forEach(l => {
+            l.classList.add('hint-flash');
+            setTimeout(() => l.classList.remove('hint-flash'), 2500);
+        });
+    }
+
+    function updateTimer() {
+        let elapsed = Math.floor((Date.now() - startTime) / 1000);
+        let m = Math.floor(elapsed / 60).toString().padStart(2, '0');
+        let s = (elapsed % 60).toString().padStart(2, '0');
+        document.getElementById('timer-display').innerText = `${m}:${s}`;
+    }
+
+    function renderBank() {
+        const b = document.getElementById('letter-bank');
+        b.innerHTML = '';
+        found.forEach(item => {
+            if(!item.used) {
+                let div = document.createElement('div');
+                div.className = 'bank-letter';
+                div.innerText = item.char;
+                div.onclick = () => {
+                    let empty = [...document.querySelectorAll('.slot')].find(s => !s.innerText);
+                    if(empty) { empty.innerText = item.char; item.used = true; renderBank(); }
+                };
+                b.appendChild(div);
+            }
+        });
+    }
+
+    function checkAnswer() {
+        let guess = [...document.querySelectorAll('.slot')].map(s => s.innerText).join('');
+        if(guess === sports[currentIdx].name) {
+            clearInterval(timerRef);
+            document.getElementById('snd-win').play();
+            document.getElementById('win-overlay').style.display = 'flex';
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+        }
+    }
+
+    function changeRound(dir) {
+        currentIdx = (currentIdx + dir + sports.length) % sports.length;
+        init();
+    }
+</script>
+</body>
+</html>
