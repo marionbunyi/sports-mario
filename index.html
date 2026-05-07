@@ -2,139 +2,143 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>Sports Mystery</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        /* GLOBAL RESET */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         body, html {
             margin: 0; padding: 0; 
-            width: 100%; min-height: 100%;
-            /* Enables smooth scrolling on all devices */
-            overflow-x: hidden; 
-            overflow-y: auto;
+            width: 100%; height: 100%;
+            overflow: hidden;
             font-family: 'Arial Rounded MT Bold', sans-serif;
             background-color: #000; color: white;
         }
 
-        /* 1. BACKGROUND LAYER */
         #bg-layer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-image: url('https://raw.githubusercontent.com/marionbunyi/sports-warm-up/main/backgroundphoto.jpg');
             background-size: cover; background-position: center;
-            opacity: 0.25; z-index: -1;
+            opacity: 0.2; z-index: -1;
         }
 
-        /* 2. NAVIGATION BAR */
         #nav-bar {
-            position: sticky; top: 0; width: 100%; height: 65px;
+            position: sticky; top: 0; width: 100%; height: 60px;
             display: flex; align-items: center; justify-content: space-between;
             padding: 0 15px; background: rgba(0,0,0,0.9);
             border-bottom: 3px solid #FBD000; z-index: 1000;
         }
+
         #timer-display { font-size: 20px; color: #FBD000; font-weight: bold; }
         .btn-nav { background: #43ad2e; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
-        /* 3. MAIN LAYOUT ENGINE */
         #main-container {
-            display: flex; flex-direction: column; /* Default for mobile */
-            padding: 20px;
-            gap: 20px;
-            max-width: 1200px;
-            margin: 0 auto;
+            display: flex; flex-direction: column; 
+            padding: 15px; gap: 15px;
+            max-width: 1400px; margin: 0 auto;
+            height: calc(100vh - 60px);
         }
 
-        /* Desktop side-by-side view */
-        @media (min-width: 850px) {
-            #main-container { flex-direction: row; align-items: flex-start; }
-            #photo-section { flex: 1.5; height: 70vh; position: sticky; top: 85px; }
+        @media (min-width: 900px) {
+            #main-container { flex-direction: row; align-items: stretch; }
+            #photo-section { flex: 1.6; }
             #control-panel { flex: 1; }
         }
 
-        /* 4. PHOTO SECTION (The Interaction Zone) */
         #photo-section {
-            width: 100%;
-            aspect-ratio: 4/3; /* Maintains shape on all gadgets */
+            width: 100%; aspect-ratio: 4/3;
             border: 6px solid #FBD000; border-radius: 25px;
             position: relative; background-color: #111;
             background-size: cover; background-position: center;
-            overflow: hidden; /* Keeps letters inside */
-            touch-action: none; /* Prevents accidental zooming when tapping letters */
+            overflow: hidden; 
+            cursor: default; /* Standard arrow cursor */
         }
 
-        /* 5. CONTROL PANEL & CARDS */
-        #control-panel {
-            display: flex; flex-direction: column; gap: 15px; width: 100%;
+        #secret-hint-btn {
+            width: 35px; height: 35px;
+            background: rgba(251, 208, 0, 0.2);
+            border: 1px solid #FBD000; border-radius: 50%;
+            color: #FBD000; font-size: 18px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+
+        .hidden-letter {
+            position: absolute; width: 50px; height: 50px;
+            display: flex; align-items: center; justify-content: center;
+            color: rgba(255, 255, 255, 0.25);
+            font-weight: bold; cursor: pointer; transform: translate(-50%, -50%);
+            font-size: 24px; z-index: 5;
+        }
+
+        .hint-flash {
+            background: #FBD000 !important; color: black !important;
+            border-radius: 50%; border: 3px solid white !important;
+            transform: translate(-50%, -50%) scale(1.8) !important;
+            z-index: 100 !important;
+        }
+
+        #control-panel { display: flex; flex-direction: column; gap: 10px; }
+        
+        .stats-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 15px; background: rgba(255,255,255,0.1); border-radius: 12px; height: 50px;
         }
 
         .card {
             background: rgba(0,0,0,0.85); border: 3px solid #FBD000;
-            border-radius: 20px; padding: 15px; text-align: center;
-            min-height: 100px;
+            border-radius: 20px; padding: 10px; text-align: center;
+            display: flex; align-items: center; justify-content: center; flex: 1;
         }
 
-        /* Scrollable Letter Bank for small screens */
-        #bank-card {
-            max-height: 200px;
-            overflow-y: auto; /* Scroll up/down inside if many letters */
-        }
-
-        /* 6. GAME ELEMENTS */
-        .hidden-letter {
-            position: absolute; width: 44px; height: 44px;
-            background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            color: rgba(255,255,255,0.5); font-weight: bold; cursor: pointer; transform: translate(-50%, -50%);
-            font-size: 18px;
-        }
-
+        #letter-bank { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
         .bank-letter {
-            width: 44px; height: 44px; background: #E52521;
-            border: 2px solid #000; border-radius: 8px;
-            display: inline-flex; align-items: center; justify-content: center;
-            font-weight: bold; font-size: 20px; cursor: pointer; margin: 4px;
-        }
-
-        /* Scrollable Answer Zone (Left-to-Right) if word is long */
-        #answer-card {
-            overflow-x: auto; 
-            white-space: nowrap;
-            padding: 10px;
-        }
-        
-        #answer-zone { 
-            display: flex; gap: 6px; justify-content: center; min-width: max-content; margin: 0 auto;
-        }
-
-        .slot {
-            width: 36px; height: 48px; border: 2px solid #FBD000;
-            border-radius: 8px; background: rgba(255,255,255,0.1);
+            width: 42px; height: 48px; background: #E52521;
+            border: 2px solid #fff; border-radius: 8px;
             display: flex; align-items: center; justify-content: center;
-            color: #FBD000; font-weight: bold; font-size: 22px; flex-shrink: 0;
+            font-weight: bold; font-size: 20px; cursor: pointer;
+            box-shadow: 0 3px 0 #8b120f;
+        }
+
+        #answer-zone { display: inline-flex; gap: 4px; }
+        .slot {
+            width: 40px; height: 50px; border: 2px solid #FBD000;
+            border-radius: 8px; background: rgba(255,255,255,0.05);
+            display: flex; align-items: center; justify-content: center;
+            color: #FBD000; font-weight: bold; font-size: 22px;
         }
 
         #check-btn {
-            width: 100%; padding: 20px; background: #43ad2e; color: white;
-            border: none; border-radius: 15px; font-size: 22px; font-weight: bold;
+            width: 100%; padding: 15px; background: #43ad2e; color: white;
+            border: none; border-radius: 15px; font-size: 20px; font-weight: bold;
             box-shadow: 0 5px 0 #2d7a1f; cursor: pointer;
         }
 
-        #clue-img { max-height: 180px; max-width: 100%; border-radius: 12px; display: none; margin-top: 10px; }
+        #clue-img { max-height: 120px; border-radius: 10px; display: none; }
 
-        /* 7. VICTORY OVERLAY */
-        #win-overlay {
+        #start-overlay, #win-overlay, #gameover-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95); z-index: 2000;
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-            padding: 20px;
+            z-index: 3000; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center;
+            background: rgba(0,0,0,0.95);
         }
+
+        .flash-msg { font-size: 70px; font-weight: 900; margin: 10px; }
+        .hands-up { font-size: 80px; color: #FBD000; font-weight: 900; margin: 20px 0; }
     </style>
 </head>
 <body>
 
 <div id="bg-layer"></div>
+<audio id="bg-music" loop src="https://raw.githubusercontent.com/marionbunyi/sports-warm-up/e3ac7bdb78353c660ee19b6b1e5585e7763c2350/Energetic%20Rock%20Background%20Music%20For%20Sports%20%26%20Workout%20Videos.mp3"></audio>
+<audio id="snd-win" src="https://raw.githubusercontent.com/marionbunyi/sports-mario/main/Correct%20answer%20sound%20effect%20_%20No%20copyright.mp3"></audio>
+
+<div id="start-overlay">
+    <h1 style="font-size: 50px; color: #FBD000;">SPORTS MYSTERY</h1>
+    <p style="font-size: 20px;">Find the letters! You only have 5 extra clicks allowed.</p>
+    <button id="check-btn" style="width: 250px;" onclick="startGame()">START GAME</button>
+</div>
 
 <div id="nav-bar">
     <button class="btn-nav" onclick="changeRound(-1)">BACK</button>
@@ -143,70 +147,88 @@
 </div>
 
 <div id="main-container">
-    <div id="photo-section"></div>
+    <div id="photo-section" onclick="countPhotoClick()"></div>
 
     <div id="control-panel">
-        <div style="text-align: center; font-size: 18px; color: #FBD000; font-weight: bold;">
-            LETTERS LEFT: <span id="find-count">0</span>
+        <div class="stats-row">
+            <div style="color: #FBD000; font-size: 18px;">MISSES: <span id="click-count">0/5</span></div>
+            <div style="color: #43ad2e; font-size: 18px;">FOUND: <span id="found-count">0/0</span></div>
+            <div id="secret-hint-btn" onclick="showHints()">?</div>
+        </div>
+        
+        <div class="card" id="clue-card" style="min-height: 140px;">
+            <div id="lock-msg" style="color: #666; font-size: 18px;">Find letters to unlock clue</div>
+            <img id="clue-img" src="">
         </div>
 
-        <div class="card" id="clue-card">
-            <div id="lock-msg" style="color: #888;">Tap hidden letters in the photo to unlock the clue!</div>
-            <center><img id="clue-img" src=""></center>
-        </div>
-
-        <div class="card" id="bank-card">
-            <div id="letter-bank"></div>
-        </div>
+        <div class="card" id="bank-card"><div id="letter-bank"></div></div>
 
         <button id="check-btn" onclick="checkAnswer()">CHECK ANSWER</button>
 
-        <div class="card" id="answer-card">
-            <div id="answer-zone"></div>
-        </div>
+        <div class="card" id="answer-card" style="min-height: 90px;"><div id="answer-zone"></div></div>
     </div>
 </div>
 
-<div id="win-overlay">
-    <h1 style="font-size: 50px; color: #FBD000; margin: 0;">STRIKE! 🏆</h1>
-    <h2 id="victory-time" style="font-size: 24px; color: white; margin: 20px 0;">Time: 00:00</h2>
-    <button class="btn-nav" style="padding: 15px 40px; font-size: 20px;" onclick="changeRound(1)">NEXT LEVEL</button>
+<div id="win-overlay" style="display:none;">
+    <h1 class="flash-msg" style="color: #43ad2e;">CORRECT!</h1>
+    <div class="hands-up">HANDS UP!</div>
+    <button class="btn-nav" style="padding: 15px 50px; font-size: 24px;" onclick="changeRound(1)">NEXT LEVEL</button>
 </div>
 
-<audio id="snd-win" src="https://raw.githubusercontent.com/marionbunyi/sports-mario/main/Correct%20answer%20sound%20effect%20_%20No%20copyright.mp3"></audio>
+<div id="gameover-overlay" style="display:none;">
+    <h1 class="flash-msg" style="color: #E52521;">GAME OVER</h1>
+    <p style="font-size: 24px;">Too many clicks! Try the next one.</p>
+    <button class="btn-nav" style="padding: 15px 50px; font-size: 24px; margin-top: 20px;" onclick="changeRound(1)">NEXT ROUND</button>
+</div>
 
 <script>
     const sports = [
-        { name: "SWIMMING", img: "swimming" },
         { name: "BASKETBALL", img: "basketball" },
-        { name: "SOCCER", img: "soccer" },
         { name: "TENNIS", img: "tennis" },
+        { name: "SOCCER", img: "soccer" },
         { name: "BADMINTON", img: "badminton" },
         { name: "BASEBALL", img: "baseball" },
+        { name: "SWIMMING", img: "swimming" },
         { name: "TABLETENNIS", img: "table tennis" },
         { name: "VOLLEYBALL", img: "volleyball" }
     ];
 
-    let currentIdx = 0;
-    let found = [];
-    let startTime;
-    let timerRef;
+    let currentIdx = 0, found = [], startTime, timerRef, misses = 0;
+    const maxMisses = 5;
+
+    function startGame() {
+        document.getElementById('start-overlay').style.display = 'none';
+        const music = document.getElementById('bg-music');
+        music.volume = 0.3;
+        music.addEventListener('timeupdate', function() { if (this.currentTime > 20) this.currentTime = 0; });
+        music.play().catch(() => {});
+        init();
+    }
 
     function init() {
         const s = sports[currentIdx];
         found = [];
+        misses = 0;
+        
         clearInterval(timerRef);
         startTime = Date.now();
         timerRef = setInterval(updateTimer, 1000);
+        
+        const pic = document.getElementById('photo-section');
+        pic.innerHTML = '';
+        
+        const imgUrl = `https://raw.githubusercontent.com/marionbunyi/sports-mario/main/hidden%20${s.img}.png`;
+        pic.style.backgroundImage = `url('${imgUrl}')`;
+        spawnLetters(s.name);
 
-        document.getElementById('find-count').innerText = s.name.length;
-        document.getElementById('photo-section').style.backgroundImage = `url('https://raw.githubusercontent.com/marionbunyi/sports-mario/main/hidden%20${s.img}.png')`;
+        updateUI();
+        document.getElementById('win-overlay').style.display = 'none';
+        document.getElementById('gameover-overlay').style.display = 'none';
+        document.getElementById('letter-bank').innerHTML = '';
         document.getElementById('clue-img').src = `https://raw.githubusercontent.com/marionbunyi/sports-mario/main/${s.img}%20clue.png`;
         document.getElementById('clue-img').style.display = 'none';
         document.getElementById('lock-msg').style.display = 'block';
-        document.getElementById('win-overlay').style.display = 'none';
-        document.getElementById('letter-bank').innerHTML = '';
-        
+
         const zone = document.getElementById('answer-zone');
         zone.innerHTML = '';
         s.name.split('').forEach(() => {
@@ -220,29 +242,58 @@
             };
             zone.appendChild(sl);
         });
+    }
 
+    function spawnLetters(name) {
         const pic = document.getElementById('photo-section');
-        pic.innerHTML = '';
-        s.name.split('').forEach(char => {
+        name.split('').forEach(char => {
             let l = document.createElement('div');
             l.className = 'hidden-letter';
             l.innerText = char;
-            // Spread letters safely within the bounds
-            l.style.top = (Math.random() * 80 + 10) + "%";
-            l.style.left = (Math.random() * 80 + 10) + "%";
-            l.onclick = () => {
+            l.style.top = (Math.random() * 70 + 15) + "%";
+            l.style.left = (Math.random() * 70 + 15) + "%";
+            l.onclick = (e) => {
+                e.stopPropagation(); 
                 l.style.display = 'none';
                 found.push({char, used: false});
-                let remain = s.name.length - found.length;
-                document.getElementById('find-count').innerText = remain;
-                if(remain === 0) {
+                if(found.length === name.length) {
                     document.getElementById('lock-msg').style.display = 'none';
                     document.getElementById('clue-img').style.display = 'block';
                 }
                 renderBank();
+                updateUI();
             };
             pic.appendChild(l);
         });
+    }
+
+    function countPhotoClick() {
+        misses++;
+        updateUI();
+        if(misses >= maxMisses) {
+            clearInterval(timerRef);
+            document.getElementById('gameover-overlay').style.display = 'flex';
+        }
+    }
+
+    function updateUI() {
+        document.getElementById('click-count').innerText = `${misses}/${maxMisses}`;
+        document.getElementById('found-count').innerText = `${found.length}/${sports[currentIdx].name.length}`;
+    }
+
+    function showHints() {
+        const remaining = document.querySelectorAll('.hidden-letter');
+        remaining.forEach(l => {
+            l.classList.add('hint-flash');
+            setTimeout(() => l.classList.remove('hint-flash'), 2500);
+        });
+    }
+
+    function updateTimer() {
+        let elapsed = Math.floor((Date.now() - startTime) / 1000);
+        let m = Math.floor(elapsed / 60).toString().padStart(2, '0');
+        let s = (elapsed % 60).toString().padStart(2, '0');
+        document.getElementById('timer-display').innerText = `${m}:${s}`;
     }
 
     function renderBank() {
@@ -262,19 +313,11 @@
         });
     }
 
-    function updateTimer() {
-        let d = Math.floor((Date.now() - startTime) / 1000);
-        let m = Math.floor(d / 60).toString().padStart(2, '0');
-        let s = (d % 60).toString().padStart(2, '0');
-        document.getElementById('timer-display').innerText = `${m}:${s}`;
-    }
-
     function checkAnswer() {
         let guess = [...document.querySelectorAll('.slot')].map(s => s.innerText).join('');
         if(guess === sports[currentIdx].name) {
             clearInterval(timerRef);
             document.getElementById('snd-win').play();
-            document.getElementById('victory-time').innerText = "FINISH TIME: " + document.getElementById('timer-display').innerText;
             document.getElementById('win-overlay').style.display = 'flex';
             confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
         }
@@ -284,8 +327,6 @@
         currentIdx = (currentIdx + dir + sports.length) % sports.length;
         init();
     }
-
-    window.onload = init;
 </script>
 </body>
 </html>
