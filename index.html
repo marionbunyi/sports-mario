@@ -12,7 +12,6 @@
         #bg-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: url('https://raw.githubusercontent.com/marionbunyi/sports-warm-up/main/backgroundphoto.jpg'); background-size: cover; background-position: center; opacity: 0.2; z-index: -1; }
         #nav-bar { position: sticky; top: 0; width: 100%; height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; background: rgba(0,0,0,0.9); border-bottom: 3px solid #FBD000; z-index: 1000; }
         
-        /* Updated Nav Layout */
         .nav-center { display: flex; align-items: center; gap: 15px; }
         
         #timer-display { font-size: 20px; color: #FBD000; font-weight: bold; }
@@ -27,14 +26,13 @@
         .card { background: rgba(0,0,0,0.85); border: 3px solid #FBD000; border-radius: 20px; padding: 10px; text-align: center; display: flex; align-items: center; justify-content: center; flex: 1; }
         #letter-bank { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
         .bank-letter { width: 42px; height: 48px; background: #E52521; border: 2px solid #fff; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; cursor: pointer; box-shadow: 0 3px 0 #8b120f; }
-        #answer-zone { display: inline-flex; gap: 4px; }
+        #answer-zone { display: inline-flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
         .slot { width: 40px; height: 50px; border: 2px solid #FBD000; border-radius: 8px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; color: #FBD000; font-weight: bold; font-size: 22px; }
         #check-btn { width: 100%; padding: 15px; background: #43ad2e; color: white; border: none; border-radius: 15px; font-size: 20px; font-weight: bold; box-shadow: 0 5px 0 #2d7a1f; cursor: pointer; }
         #clue-img { max-height: 120px; border-radius: 10px; display: none; }
         .flash-msg { font-size: 70px; font-weight: 900; margin: 10px; }
         .hands-up { font-size: 80px; color: #FBD000; font-weight: 900; margin: 20px 0; }
         
-        /* Updated Top Button Styles */
         .top-btn { background: none; border: 1px solid #FBD000; color: #FBD000; border-radius: 5px; cursor: pointer; padding: 2px 8px; font-size: 18px; }
 
         #settings-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 4000; justify-content: center; align-items: center; padding: 10px; }
@@ -85,7 +83,7 @@
         <div class="stats-row">
             <div style="color: #FBD000; font-size: 18px;">MISSES: <span id="click-count">0/5</span></div>
             <div style="color: #43ad2e; font-size: 18px;">FOUND: <span id="found-count">0/0</span></div>
-            <div id="secret-hint-btn" onclick="showHints()">?</div>
+            <div id="secret-hint-btn" onclick="showHints()" style="cursor:pointer; padding:5px;">?</div>
         </div>
         <div class="card" id="clue-card" style="min-height: 140px;">
             <div id="lock-msg" style="color: #666; font-size: 18px;">Find letters to unlock clue</div>
@@ -125,7 +123,13 @@
 <script>
     const defaultSports = [
         { name: "BASKETBALL", img: "basketball", clue: "" },
-        { name: "TENNIS", img: "tennis", clue: "" }
+        { name: "TENNIS", img: "tennis", clue: "" },
+        { name: "SOCCER", img: "soccer", clue: "" },
+        { name: "BADMINTON", img: "badminton", clue: "" },
+        { name: "BASEBALL", img: "baseball", clue: "" },
+        { name: "SWIMMING", img: "swimming", clue: "" },
+        { name: "TABLE TENNIS", img: "table tennis", clue: "" },
+        { name: "VOLLEYBALL", img: "volleyball", clue: "" }
     ];
 
     let sports = JSON.parse(localStorage.getItem('mysteryGameData')) || defaultSports;
@@ -169,22 +173,28 @@
 
         const zone = document.getElementById('answer-zone');
         zone.innerHTML = '';
-        s.name.split('').forEach(() => {
-            let sl = document.createElement('div');
-            sl.className = 'slot';
-            sl.onclick = function() {
-                if (this.innerText) {
-                    let item = found.find(f => f.char === this.innerText && f.used);
-                    if (item) { item.used = false; this.innerText = ''; renderBank(); }
-                }
-            };
-            zone.appendChild(sl);
+        s.name.split('').forEach(char => {
+            if(char === ' ') {
+                let spacer = document.createElement('div');
+                spacer.style.width = '20px';
+                zone.appendChild(spacer);
+            } else {
+                let sl = document.createElement('div');
+                sl.className = 'slot';
+                sl.onclick = function() {
+                    if (this.innerText) {
+                        let item = found.find(f => f.char === this.innerText && f.used);
+                        if (item) { item.used = false; this.innerText = ''; renderBank(); }
+                    }
+                };
+                zone.appendChild(sl);
+            }
         });
     }
 
     function spawnLetters(name) {
         const pic = document.getElementById('photo-section');
-        name.split('').forEach(char => {
+        name.replace(/\s/g, '').split('').forEach(char => {
             let l = document.createElement('div');
             l.className = 'hidden-letter';
             l.innerText = char;
@@ -194,7 +204,7 @@
                 e.stopPropagation();
                 l.style.display = 'none';
                 found.push({ char, used: false });
-                if (found.length === name.length) {
+                if (found.length === name.replace(/\s/g, '').length) {
                     document.getElementById('lock-msg').style.display = 'none';
                     document.getElementById('clue-img').style.display = 'block';
                 }
@@ -219,7 +229,7 @@
 
     function updateUI() {
         document.getElementById('click-count').innerText = `${misses}/${maxMisses}`;
-        document.getElementById('found-count').innerText = `${found.length}/${sports[currentIdx].name.length}`;
+        document.getElementById('found-count').innerText = `${found.length}/${sports[currentIdx].name.replace(/\s/g, '').length}`;
     }
 
     function updateTimer() {
@@ -248,7 +258,8 @@
 
     function checkAnswer() {
         let guess = [...document.querySelectorAll('.slot')].map(s => s.innerText).join('');
-        if (guess === sports[currentIdx].name) {
+        let actual = sports[currentIdx].name.replace(/\s/g, '');
+        if (guess === actual) {
             clearInterval(timerRef);
             document.getElementById('snd-win').play();
             document.getElementById('final-time').innerText = `TIME: ${document.getElementById('timer-display').innerText}`;
@@ -330,8 +341,10 @@
 
     function showHints() {
         document.querySelectorAll('.hidden-letter').forEach(l => {
-            l.classList.add('hint-flash');
-            setTimeout(() => { l.classList.remove('hint-flash'); }, 2000);
+            if(l.style.display !== 'none') {
+                l.classList.add('hint-flash');
+                setTimeout(() => { l.classList.remove('hint-flash'); }, 2000);
+            }
         });
     }
 </script>
